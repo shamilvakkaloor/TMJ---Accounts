@@ -1,4 +1,5 @@
-import { v1 } from "@google-cloud/firestore";
+import firestore from "@google-cloud/firestore";
+const { v1 } = firestore;
 const project = process.env.VITE_FIREBASE_PROJECT_ID;
 if (!project) throw new Error("VITE_FIREBASE_PROJECT_ID is required.");
 const client = new v1.FirestoreAdminClient({ projectId: project });
