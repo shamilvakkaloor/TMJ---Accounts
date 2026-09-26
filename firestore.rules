@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
  match /databases/{database}/documents {
-  function admin() { return request.auth != null && request.auth.uid == 'REPLACE_WITH_ADMIN_UID'; }
+  function admin() { return request.auth != null && request.auth.uid == "B1KzyiFd7Nh2cHNP2kDTG04rnUG3"; }
   function before(c,id) { return get(/databases/$(database)/documents/$(c)/$(id)).data; }
   function after(c,id) { return getAfter(/databases/$(database)/documents/$(c)/$(id)).data; }
   function bootstrap() { return !exists(/databases/$(database)/documents/meta/revision) && after('meta','revision').lastOperation == 'bootstrap'; }

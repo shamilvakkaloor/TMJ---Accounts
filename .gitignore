@@ -13,3 +13,4 @@ coverage/
 backups/
 *.key.json
 deployment-credentials.json
+gha-creds-*.json

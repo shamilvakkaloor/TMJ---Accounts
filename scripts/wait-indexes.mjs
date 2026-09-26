@@ -1,9 +1,7 @@
-import { initializeApp, applicationDefault } from "firebase-admin/app";
 import { v1 } from "@google-cloud/firestore";
 const project = process.env.VITE_FIREBASE_PROJECT_ID;
 if (!project) throw new Error("VITE_FIREBASE_PROJECT_ID is required.");
-initializeApp({ projectId: project, credential: applicationDefault() });
-const client = new v1.FirestoreAdminClient();
+const client = new v1.FirestoreAdminClient({ projectId: project });
 for (let attempt = 0; attempt < 60; attempt++) {
   const [indexes] = await client.listIndexes({
     parent: `projects/${project}/databases/(default)/collectionGroups/-`,

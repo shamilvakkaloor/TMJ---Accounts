@@ -22,6 +22,7 @@ jobs:
     permissions:
       contents: read
       pages: read
+      id-token: write
     env:
       VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
       VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
@@ -29,7 +30,8 @@ jobs:
       VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
       VITE_ADMIN_UID: ${{ vars.VITE_ADMIN_UID }}
       VITE_USE_EMULATORS: "false"
-      GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/deployment-credentials.json
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOY_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,25 +48,23 @@ jobs:
         id: pages
       - run: npm ci
       - name: Check configuration
-        run: node -e "for (const k of ['VITE_FIREBASE_API_KEY','VITE_FIREBASE_PROJECT_ID','VITE_FIREBASE_AUTH_DOMAIN','VITE_FIREBASE_APP_ID','VITE_ADMIN_UID']) if (!process.env[k]) throw Error('Missing '+k)"
+        run: node -e "for (const k of ['VITE_FIREBASE_API_KEY','VITE_FIREBASE_PROJECT_ID','VITE_FIREBASE_AUTH_DOMAIN','VITE_FIREBASE_APP_ID','VITE_ADMIN_UID','GCP_WORKLOAD_IDENTITY_PROVIDER','GCP_DEPLOY_SERVICE_ACCOUNT']) if (!process.env[k]) throw Error('Missing '+k)"
       - run: npm run check
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
       - run: npm run test:rules
-      - name: Configure the admin and backend deployment credentials
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          node scripts/configure-admin.mjs
-          node -e "require('node:fs').writeFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS,JSON.stringify(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)))"
+      - run: node scripts/configure-admin.mjs
+      - name: Authenticate to the Firestore project
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
       - run: npx firebase deploy --only firestore --project "$VITE_FIREBASE_PROJECT_ID" --non-interactive
       - run: node scripts/wait-indexes.mjs
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
-      - name: Remove backend deployment credentials
-        if: always()
-        run: node -e "require('node:fs').rmSync(process.env.GOOGLE_APPLICATION_CREDENTIALS,{force:true})"
   deploy:
     needs: build
     runs-on: ubuntu-latest

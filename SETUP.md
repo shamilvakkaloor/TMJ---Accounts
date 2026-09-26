@@ -101,7 +101,14 @@ Create a GitHub environment named **production**. Set these environment or repos
 | `VITE_FIREBASE_APP_ID`      | Firebase Web app ID                        |
 | `VITE_ADMIN_UID`            | Sole administrator UID, matching the rules |
 
-Add a protected environment secret **FIREBASE_SERVICE_ACCOUNT** containing the JSON credential for deploying the Firestore backend. It needs permissions to deploy Firestore rules, manage/list indexes and inspect the Firebase project. It does not need Firebase Hosting access. Enter the key directly in GitHub Secrets; do not paste it into source or chat. The release writes it to a temporary ignored file and removes it afterward. GitHub Pages uses GitHub's own deployment token with `pages: write` and `id-token: write` permissions.
+GitHub authenticates to Google Cloud through **Workload Identity Federation**, using short-lived credentials. No Firebase service-account key or password is stored in GitHub. Two additional repository variables select the configured identity:
+
+| Variable                         | Configured value                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | `projects/490790729007/locations/global/workloadIdentityPools/mahal-github/providers/pages` |
+| `GCP_DEPLOY_SERVICE_ACCOUNT`     | `mahal-github-deploy@tmj---accounts.iam.gserviceaccount.com`                                |
+
+The provider trusts this repository's numeric owner/repository identities, `main`, the `deploy.yml` workflow and the `production` environment. The dedicated account has Firestore index administration, Firebase Rules administration, Firebase viewer and Service Usage Consumer roles. Its impersonation policy accepts only the matching repository principal. The workflow requests a short-lived identity token after tests and removes generated credentials automatically. GitHub Pages uses a separate GitHub deployment token with `pages: write` and `id-token: write` permissions. [Google authentication action](https://github.com/google-github-actions/auth)
 
 `Checks` runs the build, domain/URL tests, emulator rules/recovery and Chromium browser tests, including a production build served from a repository subpath without route rewrites. A successful push check on `main` triggers **Deploy GitHub Pages and Firestore**. It requires the configuration above, builds with the Pages base path, injects the admin UID, deploys Firestore rules/indexes, waits for index readiness, uploads only `dist`, then publishes through the `github-pages` environment. Pull-request checks cannot publish. Manual dispatch is limited to `main`. Source changes do not migrate data or generate dues.
 
