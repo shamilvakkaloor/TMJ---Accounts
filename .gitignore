@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*-debug.log
+.firebase/
+.runtime/
+test-results/
+playwright-report/
+coverage/
+*.tsbuildinfo
+backups/
+*.key.json
+deployment-credentials.json

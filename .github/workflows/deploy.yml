@@ -1,0 +1,79 @@
+name: Deploy GitHub Pages and Firestore
+on:
+  workflow_run:
+    workflows: [Checks]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+jobs:
+  build:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      pages: read
+    env:
+      VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+      VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+      VITE_ADMIN_UID: ${{ vars.VITE_ADMIN_UID }}
+      VITE_USE_EMULATORS: "false"
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/deployment-credentials.json
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/configure-pages@v5
+        id: pages
+      - run: npm ci
+      - name: Check configuration
+        run: node -e "for (const k of ['VITE_FIREBASE_API_KEY','VITE_FIREBASE_PROJECT_ID','VITE_FIREBASE_AUTH_DOMAIN','VITE_FIREBASE_APP_ID','VITE_ADMIN_UID']) if (!process.env[k]) throw Error('Missing '+k)"
+      - run: npm run check
+        env:
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
+      - run: npm run test:rules
+      - name: Configure the admin and backend deployment credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          node scripts/configure-admin.mjs
+          node -e "require('node:fs').writeFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS,JSON.stringify(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)))"
+      - run: npx firebase deploy --only firestore --project "$VITE_FIREBASE_PROJECT_ID" --non-interactive
+      - run: node scripts/wait-indexes.mjs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+      - name: Remove backend deployment credentials
+        if: always()
+        run: node -e "require('node:fs').rmSync(process.env.GOOGLE_APPLICATION_CREDENTIALS,{force:true})"
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

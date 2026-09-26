@@ -1,0 +1,74 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "publicMembers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "version", "order": "ASCENDING" },
+        { "fieldPath": "nameKey", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicMembers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "version", "order": "ASCENDING" },
+        { "fieldPath": "id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicMembers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "version", "order": "ASCENDING" },
+        { "fieldPath": "phoneKey", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicHouses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "version", "order": "ASCENDING" },
+        { "fieldPath": "nameKey", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicHouses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "version", "order": "ASCENDING" },
+        { "fieldPath": "id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicHouses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "version", "order": "ASCENDING" },
+        { "fieldPath": "numberKey", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "publicHouses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "version", "order": "ASCENDING" },
+        { "fieldPath": "phoneKey", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "operations",
+      "fieldPath": "adjustments",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "receiptStates",
+      "fieldPath": "allocations",
+      "indexes": []
+    },
+    { "collectionGroup": "receipts", "fieldPath": "lines", "indexes": [] },
+    { "collectionGroup": "publicReceipts", "fieldPath": "lines", "indexes": [] }
+  ]
+}
