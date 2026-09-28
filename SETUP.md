@@ -1,145 +1,199 @@
-# Setting up Mahal Accounts
+# Mahal Accounts — setup (vanilla JavaScript V1)
 
-The frontend uses GitHub Pages; Firestore is the database and Firebase Authentication handles the one administrator login. Firebase Hosting is not configured or deployed. The source repository is [shamilvakkaloor/TMJ---Accounts](https://github.com/shamilvakkaloor/TMJ---Accounts). A live release requires the existing Firebase project configuration below.
+The application is ready as ordinary static files. There is **no React, TypeScript, npm install, bundler or build command**. The browser loads ES modules, Firebase Auth and Firestore directly. There is no custom API server. V1 has one administrator; members use the public lookup/QR portal without signing in.
 
-## 1. Create and configure your Firebase project
+The conversion preserves the existing Firestore collections and accounting rules. It does not require a data migration. Hosting and Firebase changes are left for you to perform using this guide.
 
-1. In the [Firebase console](https://console.firebase.google.com/), create/select your project. Create a **Cloud Firestore Standard edition** database in production mode. Choose the data location deliberately.
-2. Register a Web app. Copy its API key, auth domain, project ID and app ID.
-3. Enable **Authentication → Email/Password** and create the administrator user in the console. Copy its UID. The app deliberately has no public sign-up screen. See [Firebase password authentication](https://firebase.google.com/docs/auth/web/password-auth).
-4. Copy `.env.example` to `.env.local` and fill all five `VITE_` configuration values, including `VITE_ADMIN_UID`. Keep `VITE_USE_EMULATORS=false` for the real project. These web values and the UID are public configuration; passwords and service-account keys are not.
+## 1. Public configuration
 
-```powershell
-Copy-Item .env.example .env.local
-# Edit .env.local in your editor before the next commands.
-node --env-file=.env.local scripts/configure-admin.mjs
-npm run check
-npx firebase login
-npx firebase deploy --only firestore --project YOUR_PROJECT_ID
-```
+Edit `config.js` in the project root. It already contains the Firebase Web configuration you supplied for `tmj---accounts` and administrator UID `B1KzyiFd7Nh2cHNP2kDTG04rnUG3`.
 
-The configure script replaces the rules' placeholder with the sole allowed UID. It accepts a repeat run for the same UID and refuses an unexpected change to an already configured UID. Review an intentional admin-account replacement in both the rules and build configuration. The frontend allowlist alone is insufficient: deploy the matching rules.
+- `firebase`: Web app configuration from Firebase Console → Project settings → Your apps.
+- `adminUid`: the single administrator's Firebase Authentication UID. This must exactly match the UID in the `admin()` function near the top of `firestore.rules`.
+- `login.userId`: the administrator's user ID, initially `admin`.
+- `login.emailDomain`: domain used to turn a user ID into a synthetic Firebase email.
+- `login.emailOverride`: optional existing Firebase email address, instead of a synthetic email.
+- `login.passwordSuffix`: fixed text appended to the entered password, initially `::TMJ-v1`.
+- `demo`: keep **false** for the real app. True creates isolated fictional data in the browser only; it never connects to the real database.
+- `emulators`: keep **false** outside local emulator testing.
 
-Wait for the declared Firestore indexes to finish building in the console. Restart `npm run dev` after editing environment variables, then visit `/#/login`. Sign in using the administrator's email/password. If the workspace is empty, choose **Initialize workspace**. This creates only settings, ten Sub Mahals and zero-balance cash/bank wallets.
+Firebase Web configuration and the UID are public identifiers. Do not put a password, OAuth token or service-account key in this file. `.env` files and GitHub Actions variables are no longer read by the app.
 
-Add `shamilvakkaloor.github.io` to **Authentication → Settings → Authorized domains**, and add your custom domain if you later use one. Keep `authDomain` in the Web configuration equal to the value Firebase supplies; it is not the GitHub Pages URL. Use a separate Firebase project for connected testing, since a frontend build accesses the backend named in its configuration.
+## 2. Configure administrator authentication
 
-## 2. Configure the organization
+In [Firebase Console](https://console.firebase.google.com/project/tmj---accounts/authentication/providers), enable **Google** and **Email/Password** sign-in. Select your support email when enabling Google. No public sign-up interface is included.
 
-In **Settings**, set the real Mahal name, address, contact, timezone, migration cutover and ten Sub Mahal names. Choose whether phone, address and financial history should be publicly accessible. DOB/age evidence, references, private correction reasons and audit data are never published by the projection.
+In Authentication → Settings → Authorized domains, add:
 
-To use a logo, place a small image in `public/`, rebuild, and enter its site path (for example `/mahal-logo.png`) in Settings. Runtime file uploads are not part of this build.
+- `shamilvakkaloor.github.io`
+- `localhost` and `127.0.0.1` if you want to test real authentication locally.
+- Your custom domain, if you later use one.
 
-Create the actual funds with the correct member/house target, fixed/voluntary mode, frequency, rate and dates. The example demo funds are not copied into a real workspace. The payment due day is configurable from 1–28; annual dues use January of the assessment year. One-time campaigns require explicit payer IDs.
+Leave `firebase.authDomain` at the Firebase-provided value. Allow the Google sign-in popup in your browser.
 
-Add or rename central wallets. Record a single reconciled opening balance for each wallet that has a positive balance. Zero balances need no opening entry. Do not enter collection receipts again as other income.
+### Preserve the administrator UID you already supplied
 
-Membership eligibility is an admin verification: approved male members must be 21 or older at joining. Enter DOB or verified age with its verification date. Use the joining date to represent the effective membership start. The UI accepts pending registrations, but they do not receive assessments until approved.
+That UID was an enabled password-provider account at the previous setup stage. You can preserve it:
 
-## 3. Import existing records
+1. Set `login.emailOverride` to that existing account's exact Firebase email address.
+2. If its existing Firebase password was created normally, temporarily set `login.passwordSuffix` to an empty string `""`.
+3. Open `#/login`. Enter the configured **user ID** (`admin`) and that account's existing password.
+4. In Settings → Access & publication, choose **Link administrator Google account**. Select the Google account you intend to administer the Mahal with.
+5. Check that Firebase Console shows the same UID with both password and Google providers. Google sign-in can now use that same allowed UID.
 
-Use **Import & backup** and download a template for each type. CSV amounts are rupees (up to two decimals), dates are `YYYY-MM-DD`, IDs retain their full prefix/leading zeros, boolean columns use `true`/`false`, and files should be UTF-8. Map columns, validate, then confirm. Validation does not write records.
+If Google reports that the credential is already linked to another Firebase account, do not create an additional administrator allowlist. Either choose a different Google account to link, or intentionally adopt the Google account's UID using the next procedure.
 
-Import in this order:
+### Use a new Google administrator instead
 
-1. Sub Mahal names, then houses with their Sub Mahal IDs.
-2. Members with existing house IDs and eligibility evidence.
-3. Fund definitions and effective rates.
-4. Reconciled opening wallet balances at cutover.
-5. Outstanding historical dues, with the **remaining amount at cutover** as the imported assessed amount.
-6. Optional pre-cutover historical receipts. These keep legacy numbers separately and do not affect wallets or imported outstanding dues.
+1. Enable Google and open the app's **Continue with Google** button.
+2. A Google account whose UID is not configured is signed out and denied administration. Its Auth user appears in Firebase Console → Authentication → Users.
+3. Copy that Google user's UID into `config.js` **and** the `admin()` function in `firestore.rules`.
+4. Publish the updated rules (section 3), then publish/upload the edited static files.
+5. Sign in with Google again. There is no role selector or self-promotion path in the app.
+6. To enable the user ID/password option on a Google-only account, set the desired login mapping in `config.js`, then use Settings → **Enable user ID/password login**. It links the password provider to the current administrator UID.
 
-One CSV historical receipt row represents one receipt/fund. Imported IDs advance the sequence counter. Explicit update mode is required to update existing identity/configuration IDs. Posted finance records are corrected through compensating events, never overwritten by an import.
+### User ID and fixed password padding
 
-To resume, upload the **same file with the same mapping, type and update mode**. Completed row operation IDs are skipped, even when the progress checkpoint was interrupted. Download the manifest and correct rejected rows separately. Changing a financial file changes its job identity; do not re-upload already accepted financial rows in an edited file. Keep each import below 10,000 rows and size jobs to available quota.
+With the defaults, user ID `admin` maps to `admin@users.tmj-accounts.invalid`. If the password entered in the app is `1234`, Firebase receives `1234::TMJ-v1`. The suffix is always appended, rather than padding different inputs to the same string. `emailOverride`, if set, replaces the synthetic address.
 
-The V1 templates do not migrate pre-cutover unspent member advances as opening liabilities. If the old records contain such balances, reconcile them explicitly and extend the migration mapping before cutover; do not mislabel them as fresh collected cash. Historic member/house assignment must be entered before backdated receipt entry if it differs from current assignment. A receipt snapshots attribution when created.
+When creating a password account manually in Firebase Console, use the mapped email and the **encoded password** (entered password plus suffix). Users type only the original password in the app. The in-app linking form performs the encoding itself.
 
-Before using live receipts, compare the imported house/member counts, wallet balances, total outstanding dues and any advances with your source records. Download a full backup. Generate missing dues only after this reconciliation.
+Fixed padding is compatibility encoding, not encryption or added password strength. Use a strong administrator password. Synthetic addresses cannot receive password-reset emails; reset through Firebase Console with the same encoding, or retain Google access. Changing the mapping or suffix does not change an existing Firebase password automatically.
 
-## 4. Day-to-day operation
+## 3. Firestore rules and indexes
 
-- **Funds & dues:** preview the period, then generate. An interrupted generation retains its payer queue and resumes from saved progress. Existing assessment IDs are never charged twice. Available linked advances are applied without adding cash again. Use a due's **Manage** action for waivers, restoring waivers and manual credit application.
-- **Receive payment:** choose a single payer, funds/periods and wallet; review allocations and tender/change; post once. A receipt supports four period allocations. Split larger collections. For an uncertain network result, keep the form open and retry; check the receipt list before starting a new payment after a browser restart.
-- **Receipt corrections:** refunds reduce remaining refundable allocations and reopen the affected dues; use a waiver separately to forgive debt. Voids retain the original receipt and reverse only its remaining value. Historical statement-only receipts do not allow cash refunds.
-- **Accounts:** income/expenses are central. Transfers produce equal opposite movements and are excluded from income totals. Wallets cannot be overdrawn.
-- **Reports:** collections use actual event dates and original payment-date Sub Mahal attribution. Refunds/voids appear as negative dated events. Outstanding reports show the current balances of dues whose due dates fall in the selected range; they are not historical as-of receivable statements. Wallet reconciliation does show opening and closing balances for the date range.
-- **Publication:** after an interrupted privacy refresh, use **Settings → Refresh public profiles**. Changed privacy versions prevent stale identity records from being served while they are being rebuilt.
+Use Cloud Firestore **Standard edition**, `(default)` database. The existing database is in `asia-south1`. The previous setup initialized community settings, ten Sub Mahals, zero-balance cash/bank wallets and revision metadata only; it added no member or financial demo records.
 
-Print receipts on 105 × 148 mm A6 paper, portrait, at 100%, with browser headers/footers off. Cards are 85.6 × 54 mm. Test your actual logo, longest names and physical printer before a print run. Camera scanning requires HTTPS or localhost and camera permission; ordinary phone-camera links and manual lookup also work.
+In Firestore → Rules, replace the editor contents with the complete `firestore.rules` file and publish. Verify the configured administrator UID first. Do not use open/test-mode rules. Frontend login checks do not replace database rules.
 
-## 5. Backup and recovery
+The rules keep authoritative collections private, restrict all mutations to the administrator, protect immutable receipts/audit entries and validate corresponding ledger, wallet and publication updates. Public reads use only the explicit `public*` collections and the selected privacy settings.
 
-Choose **Download full backup** regularly and after migrations. The JSON contains private identities and financial history; store it with your controlled records. It includes authoritative collections, rates/history, original receipts, settlement states, ledger, audit, jobs and counters. Public projections and uniqueness markers can be rebuilt from it.
+The existing seven composite indexes were ready before conversion. If using another project, create these in Firestore → Indexes → Composite. Each is **Collection** scope; both fields are **Ascending**:
 
-The UI can validate a backup. Demo mode can restore it after confirmation. Real Firebase restoration uses the separate script with an administrator credential into an **empty recovery project**, never over the current live database.
+| Collection | First field | Second field |
+| --- | --- | --- |
+| publicMembers | version | nameKey |
+| publicMembers | version | id |
+| publicMembers | version | phoneKey |
+| publicHouses | version | nameKey |
+| publicHouses | version | id |
+| publicHouses | version | numberKey |
+| publicHouses | version | phoneKey |
 
-```powershell
-# Validation only; no Firebase access or credential is needed.
-npx tsx scripts/restore.ts 'C:\Backups\mahal-backup.json' RECOVERY_PROJECT_ID
+Wait for all indexes to show Enabled. `firestore.indexes.json` is the exact declaration. Its field exemptions disable indexing for `operations.adjustments`, `receiptStates.allocations`, `receipts.lines` and `publicReceipts.lines`; preserve those exemptions when setting up another project.
 
-# Apply only to the intended empty recovery project.
-$env:GOOGLE_APPLICATION_CREDENTIALS='C:\Private\recovery-service-account.key.json'
-npx tsx scripts/restore.ts 'C:\Backups\mahal-backup.json' RECOVERY_PROJECT_ID --apply
-```
+If you already have the Firebase CLI installed, the optional command is `firebase deploy --only firestore --project tmj---accounts`. It deploys rules/indexes only. The app itself never needs npm or the CLI. Console setup works without it.
 
-Use a credential authorized for the recovery project's Firestore data. The script validates accounting relationships, regenerates public/uniqueness documents, writes batches of 200 and verifies document counts. An interrupted restore can be repeated with the same backup. A completed restore is refused on repeat to prevent overwriting later activity. Stop all app writes during restoration.
+## 4. Run locally without a build
 
-Configure Auth/admin UID, rules and indexes separately for that project; backups do not contain credentials or Firebase Auth accounts. Verify wallet balances, dues, advances, receipt counts and numbering before changing the GitHub build variables to point to the recovery project. Keep the old workspace intact until the recovery is accepted.
+Use any ordinary static HTTP server; do not open `index.html` directly with a `file://` URL because browser module/security restrictions apply.
 
-## 6. GitHub Pages frontend and Firestore backend
-
-Use the `main` branch of [TMJ---Accounts](https://github.com/shamilvakkaloor/TMJ---Accounts). Never add `.env.local`, backups or service-account files. The workflows use Node 22 and Java 21. Under **Repository Settings → Pages → Build and deployment**, choose **GitHub Actions** as the source. GitHub documents public-repository support on its Free plan and private-repository support on qualifying paid plans. [GitHub Pages workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
-
-Create a GitHub environment named **production**. Set these environment or repository variables:
-
-| Variable                    | Value                                      |
-| --------------------------- | ------------------------------------------ |
-| `VITE_FIREBASE_API_KEY`     | Firebase Web API key                       |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Web app auth domain                        |
-| `VITE_FIREBASE_PROJECT_ID`  | Destination project ID                     |
-| `VITE_FIREBASE_APP_ID`      | Firebase Web app ID                        |
-| `VITE_ADMIN_UID`            | Sole administrator UID, matching the rules |
-
-GitHub authenticates to Google Cloud through **Workload Identity Federation**, using short-lived credentials. No Firebase service-account key or password is stored in GitHub. Two additional repository variables select the configured identity:
-
-| Variable                         | Configured value                                                                            |
-| -------------------------------- | ------------------------------------------------------------------------------------------- |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | `projects/490790729007/locations/global/workloadIdentityPools/mahal-github/providers/pages` |
-| `GCP_DEPLOY_SERVICE_ACCOUNT`     | `mahal-github-deploy@tmj---accounts.iam.gserviceaccount.com`                                |
-
-The provider trusts this repository's numeric owner/repository identities, `main`, the `deploy.yml` workflow and the `production` environment. The dedicated account has Firestore index administration, Firebase Rules administration, Firebase viewer and Service Usage Consumer roles. Its impersonation policy accepts only the matching repository principal. The workflow requests a short-lived identity token after tests and removes generated credentials automatically. GitHub Pages uses a separate GitHub deployment token with `pages: write` and `id-token: write` permissions. [Google authentication action](https://github.com/google-github-actions/auth)
-
-`Checks` runs the build, domain/URL tests, emulator rules/recovery and Chromium browser tests, including a production build served from a repository subpath without route rewrites. A successful push check on `main` triggers **Deploy GitHub Pages and Firestore**. It requires the configuration above, builds with the Pages base path, injects the admin UID, deploys Firestore rules/indexes, waits for index readiness, uploads only `dist`, then publishes through the `github-pages` environment. Pull-request checks cannot publish. Manual dispatch is limited to `main`. Source changes do not migrate data or generate dues.
-
-The configured project-site address will be `https://shamilvakkaloor.github.io/TMJ---Accounts/`. Routes include a hash so refreshing or scanning a deep link works on a static host:
-
-- Administration: `https://shamilvakkaloor.github.io/TMJ---Accounts/#/admin`
-- Public profile: `https://shamilvakkaloor.github.io/TMJ---Accounts/#/p/member/M-000001`
-- Receipt: `https://shamilvakkaloor.github.io/TMJ---Accounts/#/receipt/RECEIPT_ID`
-
-QR codes and bundled logos preserve the repository prefix. The release obtains the base path from `actions/configure-pages`, which also supports a root site or custom domain. For a matching local build:
+With Python installed, from this folder:
 
 ```powershell
-$env:PAGES_BASE_PATH='/TMJ---Accounts/'
-npm run build
-npm run preview
+python -m http.server 8000 --bind 127.0.0.1
 ```
 
-The Firebase CLI remains available for backend-only changes: `npx firebase deploy --only firestore --project YOUR_PROJECT_ID`. The `firebase.json` file contains only Firestore and emulator settings. The frontend is published by GitHub Actions. See [Vite's GitHub Pages guide](https://vite.dev/guide/static-deploy.html#github-pages) for base-path behavior.
-
-Verify the public home, `#/login`, a member profile, a refreshed receipt/QR link, a partial payment/refund in a test project, and an unsigned attempt to read a private collection. Keep CI tests on demo/emulator data. GitHub Pages does not provide the custom response headers previously configured for Firebase Hosting; application authentication and data authorization remain enforced by Firebase Auth and Firestore rules.
-
-## 7. Capacity and local test tools
-
-This build uses no Functions, scheduled server jobs or Storage. Spark eligibility is not a guarantee that an unlimited dataset fits. Current documented Firestore free allowances include 50,000 reads/day, 20,000 writes/day and 1 GiB stored data; security rules also constrain transaction access and expression counts. Review current [Firestore quotas](https://firebase.google.com/docs/firestore/quotas) before rollout.
-
-Each assessment creates a private/public due, audit operation and revision update (at least four writes). A 5,000-payer generation can therefore consume the daily write allowance before progress and credit updates. Public projections and historical receipts add storage. The admin currently loads all private records at login/refresh in pages of 250; measure real read volume before importing years of data. No large-scale load test has been performed.
-
-For rules tests, install Java 21 and set `JAVA_HOME`. This development workspace also contains an ignored local runtime at `.runtime/java/jdk-21.0.12.1+1-jre`. Stop other instances using port 8080 before running:
+Or, with Node 22+ installed, use the included dependency-free server:
 
 ```powershell
-npm run test:rules
+node tools/serve.mjs 8000
 ```
 
-For full local Auth/Firestore development, use a dedicated environment file with `VITE_USE_EMULATORS=true`, start `npx firebase emulators:start --only auth,firestore --project demo-mahal`, and configure the same test admin UID in the emulator user, app and rules. Do not deploy an emulator test UID to production.
+Open `http://127.0.0.1:8000/`. Administrator login is `http://127.0.0.1:8000/#/login`. For a repository-path check, run `node tools/serve.mjs 8000 /TMJ---Accounts/` and open that prefix.
+
+The included server exposes only app/test assets and has no SPA fallback or API endpoints. Firebase SDK files load from Google's official CDN, so an internet connection is needed. No service worker or offline financial-posting queue is installed.
+
+For an isolated browser demonstration, temporarily set `demo: true` in your **local** config and restore it to false before committing/uploading. Do not test payment writes against the live project with fictional records.
+
+## 5. Host directly on GitHub Pages
+
+Repository: [shamilvakkaloor/TMJ---Accounts](https://github.com/shamilvakkaloor/TMJ---Accounts).
+
+1. Confirm `config.js` is correct and `demo`/`emulators` are false.
+2. Push the source files to `main`.
+3. In repository **Settings → Pages → Build and deployment**, change Source to **Deploy from a branch**.
+4. Select branch **main**, folder **/ (root)**, then Save.
+5. Wait for GitHub Pages to publish. The root `.nojekyll` file preserves these static files without Jekyll processing.
+
+There is no app compilation step or `dist` folder. The old deployment workflow has been removed. The remaining Checks workflow runs only dependency-free JavaScript validation/tests and does not publish or contact Firebase.
+
+Addresses after you enable Pages:
+
+- Portal: `https://shamilvakkaloor.github.io/TMJ---Accounts/`
+- Administrator: `https://shamilvakkaloor.github.io/TMJ---Accounts/#/login`
+- Workspace: `https://shamilvakkaloor.github.io/TMJ---Accounts/#/admin`
+
+Hash routes, assets and QR destinations preserve the repository path. Refreshing `/#/receipt/...` and `/#/p/member/...` needs no server routing configuration. You may also upload `index.html`, `app.js`, `config.js`, `.nojekyll`, `assets/`, `lib/`, `domain/`, `pages/` and `vendor/` to any static HTTPS host.
+
+Previous GitHub `VITE_*` variables and the Google deployment identity are no longer used by this source. You may remove the old repository variables and dedicated `mahal-github-deploy` identity if you no longer need the previous automated deployment. This conversion does not change cloud IAM resources or live data.
+
+## 6. First use and migration
+
+Sign in as administrator. If using a new empty database, select **Initialize workspace** once. Existing initialized databases open directly.
+
+In Settings, enter the Mahal name, address, contact, timezone, migration cutover and ten Sub Mahal names. Select public phone/address/history visibility deliberately. Place a small logo in `assets/` and enter `assets/logo.png` in the logo field. Uploading arbitrary files is outside V1.
+
+Create the real funds: member/house target, fixed/voluntary mode, frequency, start/end dates and rates. Fixed rates are dated; later changes do not alter assessed dues or original receipts. Annual assessments use January and a configurable due day from 1–28. One-time campaigns require explicit eligible payer IDs. Advances apply only to annual fixed member funds.
+
+Import existing records through **Import & backup**, in this order:
+
+1. Sub Mahal names, houses, then members referencing those house IDs.
+2. Fund definitions and rate history.
+3. Reconciled wallet opening balances at cutover.
+4. Outstanding historical dues, using the amount still unpaid at cutover.
+5. Optional historical receipts; these are statement-only and do not add cash again.
+
+Download the matching CSV template. Keep dates as `YYYY-MM-DD`, amounts in rupees with at most two decimals, permanent ID prefixes/leading zeros and UTF-8 text. Map columns, validate, review errors, then confirm. Maximum 10,000 rows per file. Explicit update mode is required for existing identity/fund IDs.
+
+Re-upload the same file with the same mapping/type/update mode to resume safely. Completed row operation IDs are skipped. Download the manifest and correct rejected rows separately; editing already accepted financial rows creates a different import identity.
+
+V1 does not import old unspent advances as opening liabilities. Reconcile such balances and extend the migration mapping before cutover if needed. Enter historical house/Sub Mahal assignment before posting backdated receipts. Approved membership requires admin verification of a man aged at least 21 at joining, through DOB or verified-age evidence.
+
+Before starting real collections, reconcile counts, wallet balances and outstanding dues with the original register. Download a backup.
+
+## 7. Daily use
+
+- Generate assessments from Funds & dues. A saved payer queue resumes interrupted generation, does not duplicate existing dues and applies eligible advances without adding cash again.
+- Receive a payment from one payer into one wallet. Review the fund/period allocations before posting. A receipt supports four allocations; split larger payments.
+- Refunds reopen paid dues and reduce cash. Voids reverse only the remaining receipt amount. Waivers forgive dues separately. Original receipts and correction history remain intact.
+- Cashbook transfers create equal opposite movements and are excluded from income/expenditure. Opening balances are recorded once per wallet. Do not duplicate receipt collections as other income.
+- Reports show dated collections net of corrections. Outstanding reports show **current** unpaid balances of dues in the selected date range, not historical as-of balances. Cashbook reconciliation reports opening/movement/closing balances by wallet.
+- Refresh data after another tab changes the register. On an uncertain payment result, retry the existing form rather than starting a second receipt.
+- If publication was interrupted, refresh and use Settings → Refresh public profiles. Privacy-version checks block stale public identity records.
+- Print receipts on A6 (105 × 148 mm), portrait, at 100%, without browser headers/footers. ID cards are 85.6 × 54 mm. Check a physical print with your actual logo and longest names. Camera scanning needs HTTPS and permission; pasting a QR link is also supported.
+
+## 8. Backups and recovery
+
+Download a full JSON backup regularly and after migrations. It contains private data and financial history. The browser can validate a backup; live recovery is deliberately separate from normal application editing.
+
+The recovery utility uses Node 22+ built-ins only. Validation does not contact a database:
+
+```powershell
+node tools/restore.mjs 'C:\Backups\mahal-backup.json' YOUR_RECOVERY_PROJECT_ID
+```
+
+To restore, create a **different, empty** Firestore project/database. Authenticate an owner or other authorized recovery operator with the Google Cloud CLI. Obtain a short-lived OAuth token in the terminal, never in app source or config:
+
+```powershell
+gcloud auth login
+$env:GOOGLE_OAUTH_ACCESS_TOKEN = (gcloud auth print-access-token)
+node tools/restore.mjs 'C:\Backups\mahal-backup.json' YOUR_RECOVERY_PROJECT_ID --apply
+Remove-Item Env:GOOGLE_OAUTH_ACCESS_TOKEN
+```
+
+The script refuses the configured live project and nonempty destinations. It validates relationships, regenerates public/uniqueness documents, writes bounded atomic batches, checkpoints progress and verifies every resulting document against the backup. Repeat the same command after an interruption to resume. A completed recovery is refused on repeat, protecting later changes. Do not permit other writes into the recovery database during restoration.
+
+Auth accounts and credentials are not in the backup. Configure the recovery project's Auth/admin UID, rules and indexes separately. Reconcile totals before changing `config.js` to the recovered project. Keep the original project intact until recovery has been accepted.
+
+## 9. Verification and maintenance
+
+Optional developer checks use Node built-ins, with no package installation:
+
+```powershell
+node tools/check.mjs
+```
+
+This checks module syntax/import paths and accounting, backup validation, CSV, login encoding, hash URL and QR tests. `VALIDATION.md` records the conversion checks. The repository has no application dependency manifest; the two vendored QR utilities include upstream notices and `vendor/SOURCES.json`. Firebase SDK imports are pinned to `12.19.0`.
+
+Official references: [Firebase browser modules](https://firebase.google.com/docs/web/alt-setup), [Google sign-in](https://firebase.google.com/docs/auth/web/google-signin), [linking Auth providers](https://firebase.google.com/docs/auth/web/account-linking), [GitHub Pages publishing source](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).

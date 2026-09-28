@@ -1,0 +1,17 @@
+[
+  {
+    "file": "qrcodegen.js",
+    "url": "https://github.com/nayuki/QR-Code-generator/releases/download/v1.8.0/qrcodegen-v1.8.0-es6.js",
+    "sha256": "2c31b25967b50703d7584344806dca273284c9dfd331cb0089df577b87f4fcfd"
+  },
+  {
+    "file": "jsqr.js",
+    "url": "https://raw.githubusercontent.com/cozmo/jsQR/8e6a036beafa7053dd44b1b76ac578d22b1b3311/dist/jsQR.js",
+    "sha256": "133fc1fb15059f9fbb92b484fdf1cab9039af040b66cb122674330c594201337"
+  },
+  {
+    "file": "jsqr-LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/cozmo/jsQR/8e6a036beafa7053dd44b1b76ac578d22b1b3311/LICENSE",
+    "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+  }
+]

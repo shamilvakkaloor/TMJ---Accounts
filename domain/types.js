@@ -1,0 +1,16 @@
+export const collections = [
+  "settings",
+  "subMahals",
+  "houses",
+  "members",
+  "funds",
+  "dues",
+  "credits",
+  "receipts",
+  "receiptStates",
+  "wallets",
+  "ledger",
+  "operations",
+  "importJobs",
+  "sequences",
+];
