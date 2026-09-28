@@ -128,6 +128,12 @@ Hash routes, assets and QR destinations preserve the repository path. Refreshing
 
 Previous GitHub `VITE_*` variables and the Google deployment identity are no longer used by this source. You may remove the old repository variables and dedicated `mahal-github-deploy` identity if you no longer need the previous automated deployment. This conversion does not change cloud IAM resources or live data.
 
+### Vercel hosting
+
+If this repository is connected to Vercel, `vercel.json` overrides the old framework/build settings: Framework **Other**, no install command, no build command, and output directory **.** (the repository root). Keep the Vercel project's Root Directory at the repository root and Production Branch at `main`. Pushing to `main` triggers a deployment through the existing GitHub integration.
+
+Check that the newest deployment is **Ready** and matches the latest GitHub commit. A failed deployment leaves the previous production version live. Open `/#/login` on the production domain to see Google and user ID/password sign-in. Add that exact production hostname to Firebase Authentication → Settings → Authorized domains before using Google sign-in. Configuration fields are documented in [Vercel's static configuration reference](https://vercel.com/docs/project-configuration/vercel-json).
+
 ## 6. First use and migration
 
 Sign in as administrator. If using a new empty database, select **Initialize workspace** once. Existing initialized databases open directly.
