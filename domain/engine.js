@@ -265,7 +265,7 @@ export function execute(current, cmd, ctx) {
       }
       const old = v.id ? s.members.find((m) => m.id === v.id) : undefined;
       const id = old?.id || v.id || next("member", "M-");
-      assert(/^M-\d{6}$/.test(id), "Member ID must be M-000001 format.");
+      assert(/^[A-Za-z0-9-]+$/.test(id), "Member ID must be M-000001 format.");
       const date = v.effectiveDate || day;
       assert(validDate(date) && date >= v.joined, "Invalid move date.");
       const { effectiveDate: _, ...fields } = v;
