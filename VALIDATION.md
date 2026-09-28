@@ -15,3 +15,7 @@ The vanilla JavaScript conversion preserves the V1 data schema and accounting en
 Desktop and mobile screenshots were visually reviewed. Physical camera/printer hardware and Google's real OAuth consent flow were not exercised. The live Google provider/account linking, rules/UID confirmation and branch-based Pages publishing remain the owner's setup steps in SETUP.md.
 
 The old React/Vite build, package manifests and deployment workflow were removed. The remaining GitHub workflow runs JavaScript checks only and has no deployment or Firebase credentials. Browser-test screenshots, PDFs and local tool dependencies are ignored development artifacts, not app requirements. A dependency-free manual browser checklist is in `tests/BROWSER_CHECKLIST.md`.
+
+## Sub Mahal and house CSV update — 28 September 2026
+
+Preserved the user's GitHub increase to 25 and incorporated their live Firestore deletion rules. 47 automated tests pass, including ID allocation, deletion/history protection, backup roundtrip, date parsing and pre-cutover house registration. Browser checks passed for add/delete, blocked used-record deletion, CSV ID download, day-first CSV validation/import, invalid-date messages and date-order changes. Firestore emulator checks passed for 25 records, audited deletion, reload and rejection of unaudited, wrong-target and anonymous deletes. Test records were confined to local demo/emulator storage.

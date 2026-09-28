@@ -77,7 +77,7 @@ export function documents(s) {
   return out;
 }
 export function changes(before, after) {
-  return Object.entries(after).filter(
+  return [...Object.entries(after).filter(
     ([p, v]) => JSON.stringify(before[p]) !== JSON.stringify(v),
-  );
+  ), ...Object.keys(before).filter((p) => !(p in after)).map((p) => [p, null])];
 }

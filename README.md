@@ -16,7 +16,7 @@ Start with **[SETUP.md](SETUP.md)**. The Firebase Web configuration is in `confi
 - `tools/`: optional dependency-free static server, checks and recovery utility.
 - `tests/`: Node built-in tests; no third-party test runner.
 
-V1 supports houses/members, ten Sub Mahals, funds/rates, idempotent dues, partial payments/advances, four-allocation receipts, waivers/refunds/voids, wallets/cashbook, reports, public lookup/QR, A6 receipt/card printing, resumable CSV import and full JSON backups. Existing Firestore data remains compatible.
+V1 supports houses/members, up to 25 Sub Mahals, funds/rates, idempotent dues, partial payments/advances, four-allocation receipts, waivers/refunds/voids, wallets/cashbook, reports, public lookup/QR, A6 receipt/card printing, resumable CSV import and full JSON backups. Existing Firestore data remains compatible.
 
 Administrator access uses Google or a configured user ID/password, always restricted to one Firebase UID. There is no member login in V1. Public field visibility is controlled in Settings.
 

@@ -8,6 +8,7 @@ import {
   validDate,
 } from "./utils.js";
 export const MAX_ALLOCATIONS = 4;
+import { MAX_SUB_MAHALS, subMahalDeletionError } from "./submahals.js";
 const get = (a, id) => {
   const v = a.find((x) => x.id === id);
   assert(v, `Record ${id} was not found.`);
@@ -347,16 +348,40 @@ export function execute(current, cmd, ctx) {
       op.description = "Updated Mahal settings";
       break;
     }
-    case "saveSubMahal":
+    case "saveSubMahal": {
       assert(cmd.value.name.trim(), "Sub Mahal name is required.");
       assert(
         s.subMahals.some((x) => x.id === cmd.value.id) ||
-          s.subMahals.length < 25,
+          s.subMahals.length < MAX_SUB_MAHALS,
         "V1 supports 25 Sub Mahals.",
       );
-      put(s.subMahals, cmd.value);
+      assert(Number.isInteger(cmd.value.order) && cmd.value.order >= 1 && cmd.value.order <= MAX_SUB_MAHALS, "Display order must be a whole number from 1 to 25.");
+      const value = { ...cmd.value };
+      let sequence = s.sequences.find((v) => v.id === "subMahal");
+      const highest = Math.max(0, ...s.subMahals.map((v) => /^SM-\d+$/.test(v.id) ? Number(v.id.slice(3)) : 0));
+      if (!sequence) {
+        sequence = { id: "subMahal", value: Math.max(1, highest) };
+        s.sequences.push(sequence);
+      }
+      sequence.value = Math.max(sequence.value, highest);
+      if (!value.id) value.id = `SM-${String(++sequence.value).padStart(2, "0")}`;
+      assert(/^[\w-]+$/.test(value.id), "Sub Mahal CSV ID may contain only letters, numbers, underscores and hyphens.");
+      if (/^SM-\d+$/.test(value.id)) sequence.value = Math.max(sequence.value, Number(value.id.slice(3)));
+      put(s.subMahals, value);
       op.description = `Updated Sub Mahal ${cmd.value.name}`;
       break;
+    }
+    case "deleteSubMahal": {
+      const error = subMahalDeletionError(s, cmd.id);
+      assert(!error, error);
+      const sub = get(s.subMahals, cmd.id);
+      if (!s.sequences.some((v) => v.id === "subMahal"))
+        s.sequences.push({ id: "subMahal", value: Math.max(1, ...s.subMahals.map((v) => /^SM-\d+$/.test(v.id) ? Number(v.id.slice(3)) : 0)) });
+      s.subMahals = s.subMahals.filter((v) => v.id !== cmd.id);
+      op.targetId = cmd.id;
+      op.description = `Deleted unused Sub Mahal ${sub.name} (${sub.id})`;
+      break;
+    }
     case "saveWallet":
       assert(cmd.value.name.trim(), "Wallet name is required.");
       put(s.wallets, {

@@ -14,3 +14,6 @@ Use a local copy with `demo: true`; restore it to false before committing or upl
 10. With `demo: false`, the admin route must redirect to login. Google and user-ID/password controls must be present. A different Firebase UID must be denied even if sign-in itself succeeds.
 
 For local Firebase integration, use a separate `demo-` emulator project, Auth on 9099 and Firestore on 8080, matching the configuration UID/rules. Never seed fictional test data into the live project. The conversion was also exercised against these emulators; see VALIDATION.md.
+
+- Settings: add a Sub Mahal without an ID field, delete the unused record, and verify a used Sub Mahal cannot be deleted. Download the CSV ID list.
+- House CSV: validate/import `31/12/2024` with day-first order; check that it stores `2024-12-31` even before cutover. Check month-first selection and reject `31/02/2024`.

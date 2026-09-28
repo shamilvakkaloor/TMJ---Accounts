@@ -1,4 +1,23 @@
-import { assert, paise } from "./utils.js";
+import { assert, paise, validDate } from "./utils.js";
+export function csvDate(value, field = "date", order = "DMY") {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  let year, month, day;
+  const iso = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(text);
+  const local = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.exec(text);
+  if (iso) [, year, month, day] = iso;
+  else if (local) {
+    year = local[3];
+    [day, month] = order === "MDY" ? [local[2], local[1]] : [local[1], local[2]];
+  }
+  const result = year ? `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}` : "";
+  assert(validDate(result), `Invalid ${field}: "${text}". Use YYYY-MM-DD or ${order === "MDY" ? "MM/DD/YYYY" : "DD/MM/YYYY"} with a four-digit year and a real calendar date.`);
+  return result;
+}
+const dateFields = {
+  houses: ["joined"], members: ["joined", "dob", "ageVerifiedOn"],
+  funds: ["start", "end", "rateFrom"], opening: ["date"], receipts: ["date"],
+};
 export const templates = {
   houses: ["id", "name", "number", "address", "phone", "subMahalId", "joined"],
   members: [
@@ -99,7 +118,9 @@ export function parseCsv(text) {
   });
   return { headers, rows };
 }
-export function rowCommand(kind, r, state, update = false) {
+export function rowCommand(kind, r, state, update = false, dateOrder = "DMY") {
+  r = { ...r };
+  for (const field of dateFields[kind] || []) r[field] = csvDate(r[field], field, dateOrder);
   const required = (...keys) =>
     keys.forEach((k) => assert(r[k]?.trim(), `Missing ${k}.`));
   const truth = (k) => /^(true|yes|1)$/i.test(r[k] || "");

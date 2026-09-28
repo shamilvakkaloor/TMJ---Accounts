@@ -36,6 +36,7 @@ export function render() {
     validation = el("div"),
     manifestBox = el("div"),
     kind = select("kind", Object.keys(templates), "houses"),
+    dateOrder = select("dateOrder", [["DMY", "Day / month / year (DD/MM/YYYY)"], ["MDY", "Month / day / year (MM/DD/YYYY)"]], "DMY"),
     update = check(
       "Explicitly update existing identity / fund IDs",
       "update",
@@ -76,6 +77,7 @@ export function render() {
     validate.disabled = true;
   });
   updateInput.addEventListener("change", invalidate);
+  dateOrder.addEventListener("change", invalidate);
   upload.addEventListener("change", async () => {
     if (busy || !upload.files[0]) return;
     showError(error, "");
@@ -126,6 +128,7 @@ export function render() {
               kind: kind.value,
               data,
               update: updateInput.checked,
+              ...(dateOrder.value === "MDY" ? { dateOrder: "MDY" } : {}),
             }),
           )
         ).slice(0, 24),
@@ -142,7 +145,7 @@ export function render() {
           if (next.operations.some((o) => o.id === `${id}-${i}`)) continue;
           next = execute(
             next,
-            rowCommand(kind.value, row, next, updateInput.checked),
+            rowCommand(kind.value, row, next, updateInput.checked, dateOrder.value),
             {
               operationId: `preview-${i}-${uid()}`,
               now: new Date().toISOString(),
@@ -200,6 +203,7 @@ export function render() {
     upload.disabled = true;
     kind.disabled = true;
     updateInput.disabled = true;
+    dateOrder.disabled = true;
     mappingBox.querySelectorAll("select").forEach((s) => (s.disabled = true));
     showError(error, "");
     manifest = [];
@@ -218,7 +222,7 @@ export function render() {
             });
           } else {
             await run(
-              rowCommand(kind.value, data[i], store.state, updateInput.checked),
+              rowCommand(kind.value, data[i], store.state, updateInput.checked, dateOrder.value),
               opId,
             );
             manifest.push({
@@ -257,6 +261,7 @@ export function render() {
       upload.disabled = false;
       kind.disabled = false;
       updateInput.disabled = false;
+      dateOrder.disabled = false;
       validate.disabled = false;
       mappingBox
         .querySelectorAll("select")
@@ -382,6 +387,8 @@ export function render() {
           ),
         ),
         field("Upload UTF-8 CSV", upload),
+        field("CSV date order", dateOrder, "YYYY-MM-DD is always accepted. For slash, dash or dot dates, choose the order used by your spreadsheet. Example: 28/09/2026 → 2026-09-28. Use four-digit years."),
+        el("p", { class: "muted" }, "For houses, map the joining-date column to joined. Use the actual registration date; it may be earlier than the accounting cutover date. Download Sub Mahal IDs from Settings for the subMahalId column."),
         update,
         mappingBox,
         el("div", { class: "form-actions" }, validate, apply),

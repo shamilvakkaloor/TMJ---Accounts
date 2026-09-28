@@ -19,6 +19,9 @@ import { rebuildPublic, resetDemo } from "../lib/repository.js";
 import { isDemo, auth } from "../lib/firebase.js";
 import { linkGoogle, linkPassword } from "../lib/auth.js";
 import { config } from "../config.js";
+import { MAX_SUB_MAHALS, subMahalDeletionError } from "../domain/submahals.js";
+import { uid, download } from "../lib/browser.js";
+import { csvString } from "../lib/csv-export.js";
 export function render() {
   const s = store.state,
     settings = s.settings[0],
@@ -27,20 +30,43 @@ export function render() {
     replace(
       subTable,
       el("div", { class: "panel-heading" }, el("h2", {}, "Sub Mahals")),
+      el("div", { class: "form-actions" },
+        button("Add Sub Mahal", () => editSub(), "button primary", { disabled: store.state.subMahals.length >= MAX_SUB_MAHALS }),
+        button("Download Sub Mahal IDs for CSV", () => download("sub-mahals.csv", csvString(store.state.subMahals.map(({ id, name, order }) => ({ id, name, order }))), "text/csv;charset=utf-8")),
+      ),
+      el("p", { class: "muted" }, "Up to 25 Sub Mahals. IDs are assigned automatically; download the list when preparing a house CSV. Unused Sub Mahals can be deleted; used ones can be made inactive."),
       table(
-        ["NAME", "ORDER", ""],
+        ["NAME", "ORDER", "STATUS", ""],
         store.state.subMahals.map((m) => [
           m.name,
           m.order,
-          button("Edit", () => editSub(m), "button secondary", {
+          m.active ? "Active" : "Inactive",
+          el("div", { class: "form-actions" }, button("Edit", () => editSub(m), "button secondary", {
             "aria-label": "Edit " + m.name,
-          }),
+          }), button("Delete", () => deleteSub(m), "button secondary", { "aria-label": "Delete " + m.name })),
         ]),
       ),
     );
   }
-  function editSub(old) {
-    const modal = dialog("Edit Sub Mahal", []);
+  function deleteSub(sub) {
+    const error = subMahalDeletionError(store.state, sub.id);
+    const modal = dialog("Delete Sub Mahal", []);
+    if (error) {
+      modal.body.append(el("p", {}, error), button("Close", modal.close));
+      return;
+    }
+    const operationId = uid();
+    modal.body.append(form([el("p", {}, `Delete ${sub.name}? This unused Sub Mahal will be removed. The deletion remains in the audit log.`)], "Delete Sub Mahal", async () => {
+      await run({ type: "deleteSubMahal", id: sub.id }, operationId);
+      modal.close();
+      drawSubs();
+      notify("Sub Mahal deleted");
+    }, modal.close));
+  }
+  function editSub(existing) {
+    const old = existing || { id: "", name: "", order: Math.min(25, Math.max(0, ...store.state.subMahals.map((m) => m.order)) + 1), active: true };
+    const operationId = uid();
+    const modal = dialog(existing ? "Edit Sub Mahal" : "Add Sub Mahal", []);
     modal.body.append(
       form(
         [
@@ -50,6 +76,8 @@ export function render() {
             input("order", old.order, {
               type: "number",
               min: 1,
+              max: MAX_SUB_MAHALS,
+              step: 1,
               required: true,
             }),
           ),
@@ -65,7 +93,7 @@ export function render() {
               order: Number(str(data, "order")),
               active: data.has("active"),
             },
-          });
+          }, operationId);
           modal.close();
           drawSubs();
           notify("Sub Mahal saved");
@@ -78,7 +106,7 @@ export function render() {
     [
       grid(
         field("Mahal name", input("name", settings.name, { required: true })),
-        field("Receipt contact", input("contact", settings.contact)),
+        field("Receipt contact", input("contact", settings.contact), "Public office phone or email printed on receipts and the member portal. This is not your login address."),
         field(
           "Reporting timezone",
           input("timezone", settings.timezone, { required: true }),
@@ -86,6 +114,7 @@ export function render() {
         field(
           "Accounting cutover date",
           input("cutover", settings.cutover, { type: "date", required: true }),
+          "The date live accounting starts. Earlier receipts are statement-only history and do not change cash; cashbook entries start on this date. This is separate from a house joining date.",
         ),
       ),
       field("Address", el("textarea", { name: "address" }, settings.address)),

@@ -112,7 +112,11 @@ Check that the newest deployment is **Ready** and matches the latest GitHub comm
 
 Sign in as administrator. If using a new empty database, select **Initialize workspace** once. Existing initialized databases open directly.
 
-In Settings, enter the Mahal name, address, contact, timezone, migration cutover and ten Sub Mahal names. Select public phone/address/history visibility deliberately. Place a small logo in `assets/` and enter `assets/logo.png` in the logo field. Uploading arbitrary files is outside V1.
+In Settings, enter the Mahal name, address, contact, timezone, migration cutover and up to 25 Sub Mahal names. Select public phone/address/history visibility deliberately. Place a small logo in `assets/` and enter `assets/logo.png` in the logo field. Uploading arbitrary files is outside V1.
+
+Use **Settings → Add Sub Mahal** to create one by name; its ID is generated automatically. IDs are only needed when preparing CSV imports. **Download Sub Mahal IDs for CSV** gives the IDs to use in the house `subMahalId` column. Sub Mahal CSV imports supply their own permanent `id`. **Delete** removes an unused Sub Mahal after confirmation and records the action in the audit log. A Sub Mahal referenced by a current/past house assignment or receipt cannot be deleted; edit it and turn off **Active**. Keep at least one Sub Mahal.
+
+**Receipt contact** is a public phone number or email printed on receipts and the member portal; it is unrelated to login. **Accounting cutover date** is when live accounting begins: receipts before that date are statement-only imports and do not change wallet balances, while cashbook entries must be on or after cutover. For example, with cutover `2026-01-01`, a 2025 receipt is historical and a 2026 receipt is posted normally. House/member joining dates remain their actual registration dates and affect assessment eligibility; do not replace them with cutover.
 
 Create the real funds: member/house target, fixed/voluntary mode, frequency, start/end dates and rates. Fixed rates are dated; later changes do not alter assessed dues or original receipts. Annual assessments use January and a configurable due day from 1–28. One-time campaigns require explicit eligible payer IDs. Advances apply only to annual fixed member funds.
 
@@ -124,9 +128,9 @@ Import existing records through **Import & backup**, in this order:
 4. Outstanding historical dues, using the amount still unpaid at cutover.
 5. Optional historical receipts; these are statement-only and do not add cash again.
 
-Download the matching CSV template. Keep dates as `YYYY-MM-DD`, amounts in rupees with at most two decimals, permanent ID prefixes/leading zeros and UTF-8 text. Map columns, validate, review errors, then confirm. Maximum 10,000 rows per file. Explicit update mode is required for existing identity/fund IDs.
+Download the matching CSV template. Dates accept `YYYY-MM-DD` or spreadsheet dates with four-digit years: choose **CSV date order** for `DD/MM/YYYY` (default) or `MM/DD/YYYY`; slash, dash and dot separators are supported. Impossible dates and two-digit years are rejected. For houses, map the registration/joining-date column to `joined`; this date may precede cutover. Keep amounts in rupees with at most two decimals, permanent ID prefixes/leading zeros and UTF-8 text. Map columns, validate, review errors, then confirm. Maximum 10,000 rows per file. Explicit update mode is required for existing identity/fund IDs.
 
-Re-upload the same file with the same mapping/type/update mode to resume safely. Completed row operation IDs are skipped. Download the manifest and correct rejected rows separately; editing already accepted financial rows creates a different import identity.
+Re-upload the same file with the same mapping/type/update mode/date order to resume safely. Completed row operation IDs are skipped. Download the manifest and correct rejected rows separately; editing already accepted financial rows creates a different import identity.
 
 V1 does not import old unspent advances as opening liabilities. Reconcile such balances and extend the migration mapping before cutover if needed. Enter historical house/Sub Mahal assignment before posting backdated receipts. Approved membership requires admin verification of a man aged at least 21 at joining, through DOB or verified-age evidence.
 
