@@ -351,8 +351,8 @@ export function execute(current, cmd, ctx) {
       assert(cmd.value.name.trim(), "Sub Mahal name is required.");
       assert(
         s.subMahals.some((x) => x.id === cmd.value.id) ||
-          s.subMahals.length < 10,
-        "V1 supports ten Sub Mahals.",
+          s.subMahals.length < 25,
+        "V1 supports 25 Sub Mahals.",
       );
       put(s.subMahals, cmd.value);
       op.description = `Updated Sub Mahal ${cmd.value.name}`;
