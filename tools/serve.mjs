@@ -9,6 +9,7 @@ if (!base.startsWith("/") || !base.endsWith("/"))
   throw new Error("Base path must start and end with /.");
 const allowed = new Set([
   "index.html",
+  "manifest.webmanifest",
   "app.js",
   "config.js",
   "assets",
@@ -25,6 +26,7 @@ const types = {
   ".css": "text/css; charset=utf-8",
   ".svg": "image/svg+xml",
   ".json": "application/json",
+  ".webmanifest": "application/manifest+json",
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".txt": "text/plain",

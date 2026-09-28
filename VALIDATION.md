@@ -31,3 +31,7 @@ A 536-house demo import completed in 108 atomic groups and about 1.9 seconds in 
 ## Optional member details — 28 September 2026
 
 54 automated tests pass, including minimal member imports, blank age/joining information, pending approval, later approval, care-of preservation, privacy and backup validation.
+
+## Chrome app installation — 28 September 2026
+
+Added a relative-scope web app manifest, 192/512 PNG icons derived from the existing logo, standalone launch at the administrator route and install controls. Chromium reported no manifest or installability errors at the repository-prefixed local URL; the install guidance opened correctly. All 54 existing tests pass.

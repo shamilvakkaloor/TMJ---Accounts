@@ -10,6 +10,7 @@ import {
 } from "../lib/dom.js";
 import { googleLogin, passwordLogin } from "../lib/auth.js";
 import { store } from "../lib/store.js";
+import { installButton } from "../lib/install.js";
 export function render() {
   const error = alertBox();
   const google = button(
@@ -75,6 +76,7 @@ export function render() {
             ),
           ],
       link("← Public member portal", "/", "back-link"),
+      installButton(),
     ),
     el("small", {}, "One community. Every contribution accounted for."),
   );

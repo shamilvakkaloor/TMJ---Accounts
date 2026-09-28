@@ -191,3 +191,7 @@ House imports preserve codes such as `H-TMJBDR002`. Use `H-` followed by 1–64 
 Only `id`, `name` and `houseId` are required for member CSV imports. `phone`, `dob`, `verifiedAge`, `ageVerifiedOn`, `joined`, `approved` and the new `care of` column may be blank or omitted. The importer also recognizes `careOf` and `care_of` headers. Missing joining dates remain unknown; missing approval creates a pending member. Dues assessments still require approved membership, with a joining date and age evidence supplied when approving it. A house assignment is recorded from the import date when the joining date is unknown.
 
 A minimal header with care of is `id,name,houseId,care of`. Care of is shown and editable in the administrator member directory and included in backups, but is not published on public profiles.
+
+### Install as a Chrome app
+
+Open the production site in Chrome and select **Install Mahal app** in the sidebar or login page. Chrome may also show an install icon beside the address bar; alternatively use its menu → Cast, save and share → Install page as app. Confirm installation to open Mahal Accounts in its own window. The app icon and name are supplied by `manifest.webmanifest`; its relative URLs support both Vercel and the GitHub Pages repository path. Include this file and `assets/icon-192.png` / `assets/icon-512.png` on any static host. The installed app still needs an internet connection for Firebase authentication and accounting. It loads current files from the website when opened.

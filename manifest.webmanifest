@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Mahal Accounts",
+  "short_name": "Mahal",
+  "description": "Community accounts, members, houses and receipts.",
+  "start_url": "./#/admin",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f9f5",
+  "theme_color": "#153d34",
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

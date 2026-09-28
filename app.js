@@ -1,3 +1,4 @@
+import "./lib/install.js";
 import {
   el,
   button,
