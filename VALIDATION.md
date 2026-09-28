@@ -19,3 +19,7 @@ The old React/Vite build, package manifests and deployment workflow were removed
 ## Sub Mahal and house CSV update — 28 September 2026
 
 Preserved the user's GitHub increase to 25 and incorporated their live Firestore deletion rules. 47 automated tests pass, including ID allocation, deletion/history protection, backup roundtrip, date parsing and pre-cutover house registration. Browser checks passed for add/delete, blocked used-record deletion, CSV ID download, day-first CSV validation/import, invalid-date messages and date-order changes. Firestore emulator checks passed for 25 records, audited deletion, reload and rejection of unaudited, wrong-target and anonymous deletes. Test records were confined to local demo/emulator storage.
+
+## Custom house IDs — 28 September 2026
+
+50 tests pass. Added coverage for `H-TMJBDR002` CSV import/update, member links, receipt snapshots, backup validation and subsequent automatic numeric IDs. Browser CSV import and Firestore emulator create/update/publication passed with this ID. No test records were written to the live database.

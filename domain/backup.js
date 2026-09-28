@@ -142,7 +142,9 @@ export function validateBackup(raw) {
   ]) {
     const max = Math.max(
       0,
-      ...records.map((r) => Number(r.id.slice(prefix.length))),
+      ...records
+        .filter((r) => new RegExp(`^${prefix}\\d{6}$`).test(r.id))
+        .map((r) => Number(r.id.slice(prefix.length))),
     );
     assert(
       max <= (s.sequences.find((q) => q.id === key)?.value || 0),

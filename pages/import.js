@@ -388,7 +388,7 @@ export function render() {
         ),
         field("Upload UTF-8 CSV", upload),
         field("CSV date order", dateOrder, "YYYY-MM-DD is always accepted. For slash, dash or dot dates, choose the order used by your spreadsheet. Example: 28/09/2026 → 2026-09-28. Use four-digit years."),
-        el("p", { class: "muted" }, "For houses, map the joining-date column to joined. Use the actual registration date; it may be earlier than the accounting cutover date. Download Sub Mahal IDs from Settings for the subMahalId column."),
+        el("p", { class: "muted" }, "House IDs can use your existing codes, such as H-TMJBDR002: H- followed by 1–64 uppercase letters, numbers, hyphens or underscores. Map the joining-date column to joined; it may be earlier than cutover. Download Sub Mahal IDs from Settings for the subMahalId column."),
         update,
         mappingBox,
         el("div", { class: "form-actions" }, validate, apply),

@@ -189,9 +189,9 @@ export function execute(current, cmd, ctx) {
       const date = v.effectiveDate || day;
       assert(validDate(date) && date >= v.joined, "Invalid effective date.");
       const id = old?.id || v.id || next("house", "H-");
-      assert(/^H-\d{6}$/.test(id), "House ID must be H-000001 format.");
+      assert(/^H-[A-Z0-9][A-Z0-9_-]{0,63}$/.test(id), "House ID must start with H- followed by 1–64 uppercase letters, numbers, hyphens or underscores (for example H-TMJBDR002).");
       const { effectiveDate: _, ...fields } = v;
-      if (v.id && !old) {
+      if (v.id && !old && /^H-\d{6}$/.test(id)) {
         const n = Number(id.slice(2));
         let seq = s.sequences.find((q) => q.id === "house");
         if (!seq) s.sequences.push({ id: "house", value: n });

@@ -58,6 +58,36 @@ describe("Sub Mahal lifecycle", () => {
   });
 });
 describe("CSV joining dates", () => {
+  it("preserves alphanumeric house IDs through CSV, member links, receipts and backup", () => {
+    let s = fixture();
+    const row = { id: "H-TMJBDR002", name: "Custom ID House", number: "002", subMahalId: "SM-01", joined: "01/01/2025" };
+    s = apply(s, rowCommand("houses", row, s));
+    assert.equal(s.houses.at(-1).id, row.id);
+    assert.equal(s.sequences.find((q) => q.id === "house").value, 1);
+    s = apply(s, { type: "saveMember", value: { ...s.members[0], houseId: row.id, effectiveDate: "2026-01-01" } });
+    s = apply(s, payment());
+    assert.equal(s.receipts.at(-1).houseId, row.id);
+    assert.equal(documents(s)[`publicHouses/${row.id}`].id, row.id);
+    validateBackup({ format: "mahal-backup-v1", data: s });
+    s = apply(s, rowCommand("houses", { ...row, name: "Updated name" }, s, true));
+    assert.equal(s.houses.at(-1).name, "Updated name");
+    assert.throws(() => rowCommand("houses", row, s), /already exists/);
+  });
+  it("keeps automatic numeric house IDs working after custom CSV imports", () => {
+    const row = { id: "H-TMJBDR002", name: "Custom ID House", number: "002", subMahalId: "SM-01", joined: "2025-01-01" };
+    let s = apply(emptyState(), rowCommand("houses", row, emptyState()));
+    validateBackup({ format: "mahal-backup-v1", data: s });
+    s = apply(s, { type: "saveHouse", value: { ...s.houses[0], id: "", number: "003" } });
+    assert.equal(s.houses.at(-1).id, "H-000001");
+    assert.equal(s.sequences.find((q) => q.id === "house").value, 1);
+  });
+  it("rejects malformed custom house IDs", () => {
+    const s = emptyState();
+    for (const id of ["TMJBDR002", "H-", "H-TMJ/002", "H-TMJ 002", "H-" + "A".repeat(65)]) {
+      const cmd = rowCommand("houses", { id, name: "House", number: "1", subMahalId: "SM-01", joined: "2025-01-01" }, s);
+      assert.throws(() => apply(s, cmd), /House ID must start with H-/);
+    }
+  });
   it("normalizes ISO, day-first spreadsheet dates and explicit month-first dates", () => {
     for (const raw of ["2026-09-25", "25/09/2026", "25-9-2026", "25.09.2026", " 2026/9/25 "])
       assert.equal(csvDate(raw, "joined"), "2026-09-25");

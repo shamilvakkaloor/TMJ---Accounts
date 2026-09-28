@@ -181,3 +181,7 @@ node tools/check.mjs
 This checks module syntax/import paths and accounting, backup validation, CSV, login encoding, hash URL and QR tests. `VALIDATION.md` records the conversion checks. The repository has no application dependency manifest; the two vendored QR utilities include upstream notices and `vendor/SOURCES.json`. Firebase SDK imports are pinned to `12.19.0`.
 
 Official references: [Firebase browser modules](https://firebase.google.com/docs/web/alt-setup), [Google sign-in](https://firebase.google.com/docs/auth/web/google-signin), [linking Auth providers](https://firebase.google.com/docs/auth/web/account-linking), [GitHub Pages publishing source](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
+
+### Existing house IDs in CSV
+
+House imports preserve codes such as `H-TMJBDR002`. Use `H-` followed by 1–64 uppercase letters, numbers, hyphens or underscores; no spaces or slashes. Existing numeric IDs such as `H-000001` still work. Manual registration continues to generate numeric IDs. Use the exact same house ID in member CSV `houseId` fields. Custom codes do not change the numeric ID sequence, and are supported by backups, public profiles and receipt snapshots.
