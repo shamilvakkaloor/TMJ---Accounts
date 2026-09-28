@@ -250,8 +250,9 @@ export function execute(current, cmd, ctx) {
       const v = cmd.value;
       assert(v.name.trim(), "Member name is required.");
       get(s.houses, v.houseId);
-      assert(validDate(v.joined), "Joining date is required.");
+      assert(!v.joined || validDate(v.joined), "Joining date must be a valid date when supplied.");
       if (v.approved) {
+        assert(validDate(v.joined), "Add a joining date before approving membership.");
         assert(
           v.dob
             ? validDate(v.dob) && ageAt(v.dob, v.joined) >= 21
@@ -274,7 +275,9 @@ export function execute(current, cmd, ctx) {
         if (!seq) s.sequences.push({ id: "member", value: n });
         else seq.value = Math.max(n, seq.value);
       }
-      let history = old?.houseHistory ?? [{ date: v.joined, value: v.houseId }];
+      let history = old?.houseHistory ?? [{ date: v.joined || date, value: v.houseId }];
+      if (old && !old.joined && v.joined && v.joined < history[0].date)
+        history = [{ date: v.joined, value: history[0].value }, ...history];
       if (old && old.houseId !== v.houseId)
         history = changeHistory(history, date, v.houseId);
       assert(

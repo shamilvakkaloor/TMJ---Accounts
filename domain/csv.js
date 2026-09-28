@@ -30,6 +30,7 @@ export const templates = {
     "houseId",
     "joined",
     "approved",
+    "care of",
   ],
   subMahals: ["id", "name", "order"],
   funds: [
@@ -149,7 +150,7 @@ export function rowCommand(kind, r, state, update = false, dateOrder = "DMY") {
     };
   }
   if (kind === "members") {
-    required("id", "name", "houseId", "joined");
+    required("id", "name", "houseId");
     exists("members", r.id);
     return {
       type: "saveMember",
@@ -160,6 +161,7 @@ export function rowCommand(kind, r, state, update = false, dateOrder = "DMY") {
         dob: r.dob || "",
         verifiedAge: Number(r.verifiedAge || 0),
         ageVerifiedOn: r.ageVerifiedOn || "",
+        careOf: r["care of"] || r.careOf || r.care_of || "",
         houseId: r.houseId,
         joined: r.joined,
         approved: truth("approved"),

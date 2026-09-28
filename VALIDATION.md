@@ -27,3 +27,7 @@ Preserved the user's GitHub increase to 25 and incorporated their live Firestore
 ## Large house import — 28 September 2026
 
 A 536-house demo import completed in 108 atomic groups and about 1.9 seconds in the local browser; a repeat validation/import skipped all 536. One five-house group spanning distinct Sub Mahals passed Firestore emulator rules and published all houses. Existing per-row import markers remain recognized for resuming an earlier upload. The live Firestore network may take longer than the local demo.
+
+## Optional member details — 28 September 2026
+
+54 automated tests pass, including minimal member imports, blank age/joining information, pending approval, later approval, care-of preservation, privacy and backup validation.

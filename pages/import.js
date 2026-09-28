@@ -90,7 +90,7 @@ export function render() {
       mapping = Object.fromEntries(
         templates[kind.value].map((key) => [
           key,
-          headers.find((h) => h.toLowerCase() === key.toLowerCase()) || "",
+          headers.find((h) => h.toLowerCase().replace(/[\s_]/g, "") === key.toLowerCase().replace(/[\s_]/g, "")) || "",
         ]),
       );
       replace(
@@ -434,6 +434,7 @@ export function render() {
         { class: "panel panel-body" },
         el("h2", {}, "Import a CSV file"),
         field("Import type", kind),
+        el("p", { class: "muted" }, "Member CSV requires only id, name and houseId. Phone, DOB, age evidence, joined, approved and care of may be blank or omitted. Missing approval means pending approval; missing joining dates stay unknown."),
         button("Download template", () =>
           download(
             `mahal-${kind.value}-template.csv`,

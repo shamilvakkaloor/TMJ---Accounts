@@ -77,7 +77,7 @@ export function render() {
     houses.className = type === "house" ? "active" : "";
     const rows = (type === "member" ? s.members : s.houses).filter(
       (p) =>
-        norm(`${p.name} ${p.id} ${p.phone} ${p.number || ""}`).includes(
+        norm(`${p.name} ${p.id} ${p.phone} ${p.number || ""} ${p.careOf || ""}`).includes(
           norm(search.value),
         ) &&
         (!sub.value || houseFor(p)?.subMahalId === sub.value),
@@ -138,6 +138,7 @@ export function render() {
             field("Phone", input("phone", old.phone, { type: "tel" })),
             ...(isMember
               ? [
+                  field("Care of (optional)", input("careOf", old.careOf || "")),
                   field(
                     "House",
                     select(
@@ -186,10 +187,11 @@ export function render() {
                 ]),
             field(
               "Registration / joining date",
-              input("joined", old.joined || date, {
+              input("joined", old.joined || (isMember ? "" : date), {
                 type: "date",
-                required: true,
+                required: !isMember,
               }),
+              isMember ? "Optional for pending members. Leave blank when unknown; add it before approving membership." : "",
             ),
             field(
               "Move / change effective date",
@@ -233,6 +235,7 @@ export function render() {
                   dob: str(f, "dob"),
                   verifiedAge: Number(str(f, "verifiedAge") || 0),
                   ageVerifiedOn: str(f, "ageVerifiedOn"),
+                  careOf: str(f, "careOf"),
                   approved: f.has("approved"),
                 }
               : {
@@ -272,6 +275,7 @@ export function render() {
           {},
           `Phone: ${p.phone || "—"} · House: ${houseFor(p)?.name || "—"}`,
         ),
+        kind === "member" && el("p", {}, `Care of: ${p.careOf || "—"}`),
         el(
           "div",
           { class: "stats-grid" },

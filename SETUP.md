@@ -185,3 +185,9 @@ Official references: [Firebase browser modules](https://firebase.google.com/docs
 ### Existing house IDs in CSV
 
 House imports preserve codes such as `H-TMJBDR002`. Use `H-` followed by 1–64 uppercase letters, numbers, hyphens or underscores; no spaces or slashes. Existing numeric IDs such as `H-000001` still work. Manual registration continues to generate numeric IDs. Use the exact same house ID in member CSV `houseId` fields. Custom codes do not change the numeric ID sequence, and are supported by backups, public profiles and receipt snapshots.
+
+### Member imports with incomplete information
+
+Only `id`, `name` and `houseId` are required for member CSV imports. `phone`, `dob`, `verifiedAge`, `ageVerifiedOn`, `joined`, `approved` and the new `care of` column may be blank or omitted. The importer also recognizes `careOf` and `care_of` headers. Missing joining dates remain unknown; missing approval creates a pending member. Dues assessments still require approved membership, with a joining date and age evidence supplied when approving it. A house assignment is recorded from the import date when the joining date is unknown.
+
+A minimal header with care of is `id,name,houseId,care of`. Care of is shown and editable in the administrator member directory and included in backups, but is not published on public profiles.
