@@ -140,9 +140,12 @@ export function render() {
       let next = store.state;
       const { data, id } = await job(),
         errors = [];
+      const importedRows = new Set(next.operations.flatMap((o) =>
+        o.rowIds || [o.id],
+      ));
       for (const [i, row] of data.entries()) {
         try {
-          if (next.operations.some((o) => o.id === `${id}-${i}`)) continue;
+          if (importedRows.has(`${id}-${i}`)) continue;
           next = execute(
             next,
             rowCommand(kind.value, row, next, updateInput.checked, dateOrder.value),
@@ -210,6 +213,57 @@ export function render() {
     const { id, data } = await job(),
       done = [];
     try {
+      if (kind.value === "houses") {
+        const prior = new Set(store.state.operations.flatMap((o) =>
+          o.rowIds || (o.id.startsWith(id + "-") ? [o.id] : []),
+        ));
+        let batch = [], committedGroups = 0;
+        const checkpoint = async (finished) => run({
+          type: "saveImportJob",
+          value: {
+            id, kind: kind.value, fileName, completed: done,
+            errors: manifest.filter((r) => r.status === "error").map((r) => `Row ${r.row}: ${r.message}`),
+            createdAt: new Date().toISOString(),
+            status: finished ? "complete" : "running",
+          },
+        });
+        const flush = async () => {
+          if (!batch.length) return;
+          const group = batch;
+          batch = [];
+          const batchId = `${id}-batch-${group[0].index}`;
+          progress.textContent = `Importing ${group[0].index + 1}–${group.at(-1).index + 1} of ${data.length}…`;
+          try {
+            await run({ type: "importHouseBatch", items: group.map(({ rowId, command }) => ({ rowId, command })) }, batchId);
+            for (const item of group) {
+              manifest.push({ row: item.index + 2, status: "success", message: "Imported" });
+              done.push(item.rowId);
+              prior.add(item.rowId);
+            }
+          } catch (e) {
+            for (const item of group)
+              manifest.push({ row: item.index + 2, status: "error", message: e.message });
+          }
+          if (++committedGroups % 5 === 0) await checkpoint(false);
+        };
+        for (let i = 0; i < data.length; i++) {
+          const rowId = `${id}-${i}`;
+          if (prior.has(rowId)) {
+            manifest.push({ row: i + 2, status: "skipped", message: "Already imported" });
+            done.push(rowId);
+            continue;
+          }
+          try {
+            if (batch.some((item) => item.command.value.id === data[i].id)) await flush();
+            batch.push({ index: i, rowId, command: rowCommand("houses", data[i], store.state, updateInput.checked, dateOrder.value) });
+          } catch (e) {
+            manifest.push({ row: i + 2, status: "error", message: e.message });
+          }
+          if (batch.length === 5) await flush();
+        }
+        await flush();
+        await checkpoint(true);
+      } else {
       for (let i = 0; i < data.length; i++) {
         progress.textContent = `Importing ${i + 1} of ${data.length}…`;
         const opId = `${id}-${i}`;
@@ -250,6 +304,7 @@ export function render() {
               status: i === data.length - 1 ? "complete" : "running",
             },
           });
+      }
       }
       progress.textContent = `Import complete: ${manifest.filter((r) => r.status === "success").length} added, ${manifest.filter((r) => r.status === "skipped").length} skipped, ${manifest.filter((r) => r.status === "error").length} errors`;
       notify("Import complete");

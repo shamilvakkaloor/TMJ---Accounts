@@ -58,6 +58,26 @@ describe("Sub Mahal lifecycle", () => {
   });
 });
 describe("CSV joining dates", () => {
+  it("groups house imports in one audit operation and resumes without duplicate rows", () => {
+    const state = emptyState();
+    const items = Array.from({ length: 5 }, (_, index) => ({
+      rowId: `import-example-${index}`,
+      command: rowCommand("houses", {
+        id: `H-CUSTOM${index}`, name: `House ${index}`, number: String(index),
+        subMahalId: "SM-01", joined: "2025-01-01",
+      }, state),
+    }));
+    const cmd = { type: "importHouseBatch", items };
+    const next = apply(state, cmd, "import-group-1");
+    assert.equal(next.houses.length, 5);
+    assert.equal(next.operations.length, state.operations.length + 1);
+    assert.deepEqual(next.operations.at(-1).rowIds, items.map((item) => item.rowId));
+    assert.equal(apply(next, cmd, "import-group-1"), next);
+    validateBackup({ format: "mahal-backup-v1", data: next });
+    assert.throws(() => apply(state, { ...cmd, items: [...items, items[0]] }), /at most 5/);
+    assert.throws(() => apply(state, { ...cmd, items: [items[0], { ...items[1], rowId: items[0].rowId }] }), /row IDs must be unique/);
+    assert.throws(() => apply(state, { ...cmd, items: [items[0], { ...items[1], command: items[0].command }] }), /House IDs must be unique/);
+  });
   it("preserves alphanumeric house IDs through CSV, member links, receipts and backup", () => {
     let s = fixture();
     const row = { id: "H-TMJBDR002", name: "Custom ID House", number: "002", subMahalId: "SM-01", joined: "01/01/2025" };

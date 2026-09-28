@@ -87,6 +87,32 @@ function changeHistory(history, date, value) {
   return h.sort((a, b) => a.date.localeCompare(b.date));
 }
 export function execute(current, cmd, ctx) {
+  if (cmd.type === "importHouseBatch") {
+    if (current.operations.some((o) => o.id === ctx.operationId)) return current;
+    assert(cmd.items.length > 0 && cmd.items.length <= 5, "Import houses in groups of at most 5.");
+    assert(new Set(cmd.items.map((item) => item.rowId)).size === cmd.items.length,
+      "Import row IDs must be unique within a group.");
+    assert(new Set(cmd.items.map((item) => item.command.value.id)).size === cmd.items.length,
+      "House IDs must be unique within an import group.");
+    let nextState = current;
+    for (const [index, item] of cmd.items.entries()) {
+      assert(item.command.type === "saveHouse", "Only house rows may be grouped.");
+      nextState = execute(nextState, item.command, {
+        ...ctx,
+        operationId: `${ctx.operationId}-row-${index}`,
+      });
+    }
+    const operations = nextState.operations.slice(0, current.operations.length);
+    operations.push({
+      ...nextState.operations.at(-1),
+      id: ctx.operationId,
+      kind: "saveHouse",
+      description: `Imported ${cmd.items.length} houses`,
+      rowIds: cmd.items.map((item) => item.rowId),
+    });
+    nextState.operations = operations;
+    return nextState;
+  }
   if (current.operations.some((o) => o.id === ctx.operationId)) return current;
   const s = structuredClone(current);
   const day = new Intl.DateTimeFormat("en-CA", {
