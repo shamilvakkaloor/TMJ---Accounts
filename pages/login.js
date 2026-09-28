@@ -46,12 +46,12 @@ export function render() {
             el(
               "p",
               { class: "login-divider" },
-              "or use your administrator user ID",
+              "or use your administrator user ID or email",
             ),
             form(
               [
                 field(
-                  "User ID",
+                  "User ID or email",
                   input("userId", "", {
                     required: true,
                     autoComplete: "username",

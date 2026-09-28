@@ -162,7 +162,9 @@ export function render() {
       notify("Public profiles refreshed");
     },
   );
-  if (!isDemo && !providers.includes("google.com"))
+  if (!isDemo && config.additionalAdminUids?.length)
+    access.append(el("p", {}, "Google and password sign-in use separately authorized administrator accounts. Both are already configured; account linking is not required."));
+  if (!isDemo && !config.additionalAdminUids?.length && !providers.includes("google.com"))
     access.append(
       button("Link administrator Google account", async () => {
         try {
@@ -174,7 +176,7 @@ export function render() {
         }
       }),
     );
-  if (!isDemo && !providers.includes("password"))
+  if (!isDemo && !config.additionalAdminUids?.length && !providers.includes("password"))
     access.append(
       button("Enable user ID/password login", () => {
         const modal = dialog("Enable administrator password login", []);

@@ -1,12 +1,21 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { loginCredentials } from "../domain/credentials.js";
+import { isAdministrator } from "../domain/access.js";
 import { parseCsv } from "../domain/csv.js";
 import { csvString } from "../lib/csv-export.js";
 import { routeInfo } from "../lib/router.js";
 import qrcodegen from "../vendor/qrcodegen.js";
 import decode from "../vendor/jsqr.js";
 describe("native module infrastructure", () => {
+  it("allows only the explicitly configured administrator identities", () => {
+    const options = { adminUid: "password-admin", additionalAdminUids: ["google-admin"] };
+    assert.equal(isAdministrator("password-admin", options), true);
+    assert.equal(isAdministrator("google-admin", options), true);
+    for (const uid of [undefined, null, "", "other-google-user", "deleted-admin"])
+      assert.equal(isAdministrator(uid, options), false);
+    assert.equal(isAdministrator("password-admin", { adminUid: "password-admin" }), true);
+  });
   it("maps a user ID to synthetic email and appends fixed padding without collisions", () => {
     const options = {
       userId: "admin",
@@ -32,6 +41,14 @@ describe("native module infrastructure", () => {
       }).email,
       "owner@example.com",
     );
+  });
+  it("accepts only the configured administrator ID or email without changing an existing password", () => {
+    const options = { userId: "admin", emailOverride: "owner@example.com", passwordSuffix: "" };
+    const expected = { email: "owner@example.com", password: "example-password" };
+    assert.deepEqual(loginCredentials("admin", "example-password", options), expected);
+    assert.deepEqual(loginCredentials(" OWNER@EXAMPLE.COM ", "example-password", options), expected);
+    assert.throws(() => loginCredentials("someone@example.com", "example-password", options));
+    assert.throws(() => loginCredentials("", "example-password", options));
   });
   it("parses multiline CSV, escaped quotes, Malayalam and leading zeros", () => {
     const data = [{ name: 'നൂർ, "വീട്"\nRoad', id: "001", phone: "090000001" }];

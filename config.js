@@ -6,13 +6,15 @@ export const config = {
     projectId: "tmj---accounts",
     appId: "1:490790729007:web:46458eba1d20704d369dda",
   },
-  adminUid: "B1KzyiFd7Nh2cHNP2kDTG04rnUG3",
+  adminUid: "sSrHlyKjlseo8ncOluufxbJOce72",
+  // Additional administrator identity: the owner's existing Google account.
+  additionalAdminUids: ["G0YLplPHzlT8dJVIVA5wWwLZCPJ3"],
   login: {
     userId: "admin",
     emailDomain: "users.tmj-accounts.invalid",
     // Optional existing Firebase password-provider email for this user ID.
-    emailOverride: "",
-    passwordSuffix: "::TMJ-v1",
+    emailOverride: "admin@tmja.yxel.app",
+    passwordSuffix: "",
   },
   // Explicit local testing only. Never turn this on for the live site.
   demo: false,

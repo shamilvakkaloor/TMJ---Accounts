@@ -1,64 +1,38 @@
 # Mahal Accounts — setup (vanilla JavaScript V1)
 
-The application is ready as ordinary static files. There is **no React, TypeScript, npm install, bundler or build command**. The browser loads ES modules, Firebase Auth and Firestore directly. There is no custom API server. V1 has one administrator; members use the public lookup/QR portal without signing in.
+The application is ready as ordinary static files. There is **no React, TypeScript, npm install, bundler or build command**. The browser loads ES modules, Firebase Auth and Firestore directly. There is no custom API server. V1 has administrator-only access; members use the public lookup/QR portal without signing in.
 
 The conversion preserves the existing Firestore collections and accounting rules. It does not require a data migration. Hosting and Firebase changes are left for you to perform using this guide.
 
 ## 1. Public configuration
 
-Edit `config.js` in the project root. It already contains the Firebase Web configuration you supplied for `tmj---accounts` and administrator UID `B1KzyiFd7Nh2cHNP2kDTG04rnUG3`.
+Edit `config.js` in the project root. It already contains the Firebase Web configuration you supplied for `tmj---accounts` and the configured password and Google administrator identities.
 
 - `firebase`: Web app configuration from Firebase Console → Project settings → Your apps.
-- `adminUid`: the single administrator's Firebase Authentication UID. This must exactly match the UID in the `admin()` function near the top of `firestore.rules`.
+- `adminUid`: password administrator UID.
+- `additionalAdminUids`: explicitly authorized Google administrator UID(s). Both lists must match the `admin()` allowlist in `firestore.rules`.
 - `login.userId`: the administrator's user ID, initially `admin`.
 - `login.emailDomain`: domain used to turn a user ID into a synthetic Firebase email.
 - `login.emailOverride`: optional existing Firebase email address, instead of a synthetic email.
-- `login.passwordSuffix`: fixed text appended to the entered password, initially `::TMJ-v1`.
+- `login.passwordSuffix`: empty for the existing password account, so the entered password is sent unchanged.
 - `demo`: keep **false** for the real app. True creates isolated fictional data in the browser only; it never connects to the real database.
 - `emulators`: keep **false** outside local emulator testing.
 
 Firebase Web configuration and the UID are public identifiers. Do not put a password, OAuth token or service-account key in this file. `.env` files and GitHub Actions variables are no longer read by the app.
 
-## 2. Configure administrator authentication
+## 2. Administrator authentication
 
-In [Firebase Console](https://console.firebase.google.com/project/tmj---accounts/authentication/providers), enable **Google** and **Email/Password** sign-in. Select your support email when enabling Google. No public sign-up interface is included.
+The existing accounts are configured separately, with both explicitly authorized in the app and Firestore rules:
 
-In Authentication → Settings → Authorized domains, add:
+- Password: enter user ID `admin` **or** `admin@tmja.yxel.app`, and the existing Firebase password. The password is not stored in source control. No suffix is appended.
+- Google: choose **Continue with Google** and select `m.shamilvakkaloor07@gmail.com`.
+- Other Firebase users are not administrators. Member login is not included.
 
-- `shamilvakkaloor.github.io`
-- `localhost` and `127.0.0.1` if you want to test real authentication locally.
-- Your custom domain, if you later use one.
+The password account UID is `sSrHlyKjlseo8ncOluufxbJOce72`; the Google account UID is `G0YLplPHzlT8dJVIVA5wWwLZCPJ3`. These are separate accounts for the owner's two login methods; no account deletion or linking is required. Audit entries retain the actual signing-in UID.
 
-Leave `firebase.authDomain` at the Firebase-provided value. Allow the Google sign-in popup in your browser.
+In [Firebase Console](https://console.firebase.google.com/project/tmj---accounts/authentication/providers), keep Google and Email/Password enabled. Authentication → Settings → Authorized domains must include `tmj-accounts.vercel.app`, `shamilvakkaloor.github.io`, and any future production hostname. Keep the Firebase-provided authDomain and allow the Google popup.
 
-### Preserve the administrator UID you already supplied
-
-That UID was an enabled password-provider account at the previous setup stage. You can preserve it:
-
-1. Set `login.emailOverride` to that existing account's exact Firebase email address.
-2. If its existing Firebase password was created normally, temporarily set `login.passwordSuffix` to an empty string `""`.
-3. Open `#/login`. Enter the configured **user ID** (`admin`) and that account's existing password.
-4. In Settings → Access & publication, choose **Link administrator Google account**. Select the Google account you intend to administer the Mahal with.
-5. Check that Firebase Console shows the same UID with both password and Google providers. Google sign-in can now use that same allowed UID.
-
-If Google reports that the credential is already linked to another Firebase account, do not create an additional administrator allowlist. Either choose a different Google account to link, or intentionally adopt the Google account's UID using the next procedure.
-
-### Use a new Google administrator instead
-
-1. Enable Google and open the app's **Continue with Google** button.
-2. A Google account whose UID is not configured is signed out and denied administration. Its Auth user appears in Firebase Console → Authentication → Users.
-3. Copy that Google user's UID into `config.js` **and** the `admin()` function in `firestore.rules`.
-4. Publish the updated rules (section 3), then publish/upload the edited static files.
-5. Sign in with Google again. There is no role selector or self-promotion path in the app.
-6. To enable the user ID/password option on a Google-only account, set the desired login mapping in `config.js`, then use Settings → **Enable user ID/password login**. It links the password provider to the current administrator UID.
-
-### User ID and fixed password padding
-
-With the defaults, user ID `admin` maps to `admin@users.tmj-accounts.invalid`. If the password entered in the app is `1234`, Firebase receives `1234::TMJ-v1`. The suffix is always appended, rather than padding different inputs to the same string. `emailOverride`, if set, replaces the synthetic address.
-
-When creating a password account manually in Firebase Console, use the mapped email and the **encoded password** (entered password plus suffix). Users type only the original password in the app. The in-app linking form performs the encoding itself.
-
-Fixed padding is compatibility encoding, not encryption or added password strength. Use a strong administrator password. Synthetic addresses cannot receive password-reset emails; reset through Firebase Console with the same encoding, or retain Google access. Changing the mapping or suffix does not change an existing Firebase password automatically.
+If an account is deleted and recreated, its UID changes. Update both `config.js` and the `admin()` allowlist in `firestore.rules`, publish the rules, and push the app. Never authorize accounts based only on an email domain. Optional synthetic email/password suffix mapping remains available for future configurations; changing it does not change an existing Firebase password.
 
 ## 3. Firestore rules and indexes
 
