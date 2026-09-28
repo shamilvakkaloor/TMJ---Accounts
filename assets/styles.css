@@ -130,6 +130,9 @@ input[type="checkbox"] {
 button svg {
   vertical-align: middle;
 }
+[data-install-app][hidden] {
+  display: none !important;
+}
 .button {
   display: inline-flex;
   align-items: center;
