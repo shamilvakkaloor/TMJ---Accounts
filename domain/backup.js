@@ -23,7 +23,7 @@ export function validateBackup(raw) {
     s.settings.length === 1 && s.settings[0].schemaVersion === 1,
     "Unsupported schema version.",
   );
-  assert(s.subMahals.length === 10, "Expected ten Sub Mahals.");
+  assert(s.subMahals.length >= 1 && s.subMahals.length <= 25, "Expected 1 to 25 Sub Mahals.");
   for (const h of s.houses)
     assert(
       s.subMahals.some((m) => m.id === h.subMahalId),
