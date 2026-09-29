@@ -14,10 +14,9 @@ import {
   badge,
   stat,
 } from "../lib/dom.js";
-import { publicDoc, publicSearch, publicList } from "../lib/repository.js";
+import { publicDoc, publicSearch, publicList, publicHouseMembers } from "../lib/repository.js";
 import { isDemo } from "../lib/firebase.js";
-import { qr, scan } from "../lib/qr.js";
-import { appUrl } from "../lib/urls.js";
+import { scan } from "../lib/qr.js";
 import {
   money,
   sum,
@@ -25,7 +24,6 @@ import {
   dueStatus,
   displayDate,
 } from "../domain/utils.js";
-import { store } from "../lib/store.js";
 export const publicHeader = (name = "Mahal Accounts") =>
   el(
     "header",
@@ -266,6 +264,28 @@ export async function profile({ type, id }) {
       ),
     ),
   );
+  if (type === "member" && house) main.append(link("View all members in this house", `/p/house/${house.id}`, "button secondary"));
+  if (type === "house") {
+    const people = [], list = el("div"), issue = alertBox();
+    const moreMembers = button("Load more members", fetchMembers, "button secondary");
+    const heading = el("h2", {}, "House members");
+    async function fetchMembers() {
+      moreMembers.disabled = true; showError(issue, "");
+      try {
+        const page = await publicHouseMembers(id, people.at(-1)?.id);
+        people.push(...page);
+        heading.textContent = `House members (${people.length}${page.length === 100 ? "+" : ""})`;
+        replace(list, people.length ? table(["MEMBER", "ID", "STATUS"], people.map((member) => [
+          link(member.name, `/p/member/${member.id}`, "record-id"), member.id,
+          badge(member.active ? "Active" : "Inactive", member.active ? "green" : "neutral"),
+        ])) : empty("No members registered in this house"));
+        moreMembers.hidden = page.length < 100;
+      } catch (e) { showError(issue, e); }
+      finally { moreMembers.disabled = false; }
+    }
+    main.append(el("section", { class: "panel panel-body house-members" }, heading, list, issue, moreMembers));
+    await fetchMembers();
+  }
   if (!settings.publicHistory) {
     main.append(
       el(
@@ -373,62 +393,6 @@ export async function profile({ type, id }) {
   await fetchMore();
   return root;
 }
-export async function card({ type, id }) {
-  const s = store.state,
-    record = (type === "member" ? s.members : s.houses).find(
-      (p) => p.id === id,
-    ),
-    house =
-      type === "member"
-        ? s.houses.find((h) => h.id === record?.houseId)
-        : record;
-  if (!record) return empty("Record unavailable");
-  return el(
-    "div",
-    { class: "standalone card-page" },
-    el(
-      "div",
-      { class: "print-toolbar" },
-      link("← Back", "/admin/directory", "back-link"),
-      button("Print ID card", () => window.print(), "button primary"),
-    ),
-    el(
-      "article",
-      { class: "id-card" },
-      el(
-        "div",
-        { class: "id-card-brand" },
-        el(
-          "div",
-          {},
-          el("strong", {}, s.settings[0].name),
-          el("small", {}, `${type.toUpperCase()} IDENTITY CARD`),
-        ),
-      ),
-      el(
-        "div",
-        { class: "id-card-body" },
-        el(
-          "div",
-          {},
-          el("h2", {}, record.name),
-          el("strong", { class: "mono" }, record.id),
-          el(
-            "p",
-            {},
-            house?.name,
-            el("br"),
-            s.subMahals.find((m) => m.id === house?.subMahalId)?.name,
-          ),
-        ),
-        qr(appUrl(`/p/${type}/${id}`), 88),
-      ),
-      el("footer", {}, "One community. A lasting connection."),
-    ),
-    el(
-      "p",
-      { class: "print-help" },
-      "Print at 100% scale. Card size: 85.6 × 54 mm.",
-    ),
-  );
+export async function card(info) {
+  return (await import('./cards.js')).render(info);
 }

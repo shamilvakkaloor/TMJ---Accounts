@@ -19,6 +19,7 @@ import {
 import { store, run } from "../lib/store.js";
 import { money, sum, outstanding, norm, displayDate } from "../domain/utils.js";
 import { today } from "../lib/browser.js";
+import { houseMembers } from "../domain/cards.js";
 export function render() {
   let type = "member";
   const root = el("div"),
@@ -115,9 +116,10 @@ export function render() {
                 : "Active",
             p.active ? "green" : "neutral",
           ),
-          button("Edit", () => edit(p), "button secondary", {
+          el("div", { class: "directory-actions" }, button("Edit", () => edit(p), "button secondary", {
             "aria-label": "Edit " + p.name,
-          }),
+          }), link("ID card", `/card/${type}/${p.id}`, "button secondary"),
+          type === "house" && button("View members", () => details(p), "button secondary")),
         ]),
       ),
     );
@@ -276,6 +278,14 @@ export function render() {
           `Phone: ${p.phone || "—"} · House: ${houseFor(p)?.name || "—"}`,
         ),
         kind === "member" && el("p", {}, `Care of: ${p.careOf || "—"}`),
+        kind === "house" && el("section", { class: "house-members" },
+          el("h3", {}, `House members (${houseMembers(s, p.id).length})`),
+          houseMembers(s, p.id).length ? pagedTable(["MEMBER", "ID", "STATUS", ""], houseMembers(s, p.id).map((member) => [
+            button(member.name, () => { modal.close(); details(member); }, "record-button"),
+            member.id, badge(!member.active ? "Inactive" : member.approved ? "Active" : "Pending approval"),
+            link("ID card", `/card/member/${member.id}`, "button secondary"),
+          ])) : el("p", {}, "No members registered in this house."),
+        ),
         el(
           "div",
           { class: "stats-grid" },
@@ -298,7 +308,7 @@ export function render() {
             `/admin/receive?payer=${p.id}`,
             "button primary",
           ),
-          link("Print ID card", `/card/${kind}/${p.id}`, "button secondary"),
+          link("Generate ID card", `/card/${kind}/${p.id}`, "button secondary"),
           link("Public profile", `/p/${kind}/${p.id}`, "button secondary"),
         ),
       ],

@@ -55,6 +55,14 @@
         { "fieldPath": "version", "order": "ASCENDING" },
         { "fieldPath": "phoneKey", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "publicMembers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "version", "order": "ASCENDING" },
+        { "fieldPath": "houseId", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

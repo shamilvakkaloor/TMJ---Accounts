@@ -3539,3 +3539,18 @@ input {
     display: none !important;
   }
 }
+
+/* Designed ID cards: the exact same canvas is used in PNG, PDF and print. */
+.card-page { max-width: 1140px; }
+.generated-id-card { display: block; width: 100%; height: auto; border-radius: 28px; box-shadow: 0 12px 35px #153d3420; }
+.generated-card-sheet { margin: 24px 0; }
+.generated-card-sheet .print-toolbar { margin: 18px 0 32px; }
+.directory-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.house-members { margin-top: 24px; }
+@media print {
+  .card-page { width: 85.6mm; max-width: none; }
+  .generated-id-card { width: 85.6mm; height: 54mm; border-radius: 0; box-shadow: none; }
+  .generated-card-sheet { margin: 0; page: card; break-after: page; break-inside: avoid; }
+  .generated-card-sheet:last-child { break-after: auto; }
+  .card-page > .alert, .card-page .print-toolbar, .card-page .print-help { display: none !important; }
+}

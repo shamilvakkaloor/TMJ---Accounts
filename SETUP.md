@@ -205,3 +205,11 @@ Upload `id,name,houseId,care of`; the app recognizes member files from `houseId`
 The administrator workspace loads collections in parallel. The browser saves an account/project-scoped snapshot in IndexedDB for up to 24 hours. On every opening, Firebase authentication and a server-only revision check must succeed before that snapshot can be used. Changed revisions trigger a complete reload; imports and other successful edits update the snapshot after a short debounce. Signing out clears saved snapshots. Browser storage being unavailable does not prevent loading from Firestore. This does not enable offline access or offline writes.
 
 Use the app’s **Refresh data** button after editing documents directly in Firebase Console: it bypasses the snapshot even when the edit did not update meta/revision. Firebase rule edits do not require rebuilding the snapshot.
+
+## Member and house ID cards
+
+Open **Members & houses**, then choose **ID card** beside a member or house (also available as **Generate ID card** in record details). Cards use the configured Mahal name and current records in the green/gold design. Download a PNG image or a PDF, or print at 100% scale on 85.6 × 54 mm cards. House cards include every currently linked member, including inactive and pending members; households with more than six members receive continuation pages. The PDF includes all pages; PNG downloads are available separately per page. Regenerate cards after changing names, care of or household membership.
+
+QR codes open the current public member/house profile at the same deployment where the card was generated. The public portal scanner supports the camera, uploading an ID-card image and pasting its QR link. House profiles list linked members even when financial history is private; they use existing public identity projections and do not expose care-of or private age/approval fields. Large lists use **Load more members**. Members link back to their household. Administrators can also use **Houses → View members**.
+
+Deploy the publicMembers version/houseId composite index from firestore.indexes.json in a new Firebase project. It is already deployed for tmj---accounts. No additional Firestore rule permissions or backend services are required.
