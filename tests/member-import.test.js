@@ -7,6 +7,20 @@ import { documents } from "../domain/projection.js";
 import { validateBackup } from "../domain/backup.js";
 
 describe("optional member CSV fields", () => {
+  it("imports four-column custom IDs without corrupting the member sequence", () => {
+    let s = fixture();
+    for (const id of ["TMJBDR002", "12345", "member-Ab12"]) {
+      const csv = `id,name,houseId,care of\n${id},Member,H-000001,Contact`;
+      s = apply(s, rowCommand("members", parseCsv(csv).rows[0], s));
+      assert.equal(s.members.at(-1).id, id);
+      assert.equal(s.members.at(-1).careOf, "Contact");
+      assert.equal(s.sequences.find((v) => v.id === "member").value, 1);
+      validateBackup({ format: "mahal-backup-v1", data: s });
+    }
+    s = apply(s, { type: "saveMember", value: { ...s.members.at(-1), id: "" } });
+    assert.equal(s.members.at(-1).id, "M-000002");
+    assert.equal(s.sequences.find((v) => v.id === "member").value, 2);
+  });
   it("imports with only id, name and houseId without inventing age or joining dates", () => {
     const s = fixture();
     const row = parseCsv("id,name,houseId\nM-000002,New Member,H-000001").rows[0];

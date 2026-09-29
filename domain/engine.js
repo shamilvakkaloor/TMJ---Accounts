@@ -265,11 +265,11 @@ export function execute(current, cmd, ctx) {
       }
       const old = v.id ? s.members.find((m) => m.id === v.id) : undefined;
       const id = old?.id || v.id || next("member", "M-");
-      assert(/^[A-Za-z0-9-]+$/.test(id), "Member ID must be M-000001 format.");
+      assert(/^[A-Za-z0-9-]+$/.test(id), "Member ID may contain letters, digits and hyphens.");
       const date = v.effectiveDate || day;
       assert(validDate(date) && date >= v.joined, "Invalid move date.");
       const { effectiveDate: _, ...fields } = v;
-      if (v.id && !old) {
+      if (v.id && !old && /^M-\d{6}$/.test(id)) {
         const n = Number(id.slice(2));
         let seq = s.sequences.find((q) => q.id === "member");
         if (!seq) s.sequences.push({ id: "member", value: n });

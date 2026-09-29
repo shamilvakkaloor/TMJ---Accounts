@@ -35,3 +35,7 @@ A 536-house demo import completed in 108 atomic groups and about 1.9 seconds in 
 ## Chrome app installation — 28 September 2026
 
 Added a relative-scope web app manifest, 192/512 PNG icons derived from the existing logo, standalone launch at the administrator route and install controls. Chromium reported no manifest or installability errors at the repository-prefixed local URL; the install guidance opened correctly. All 54 existing tests pass.
+
+## Four-column member CSV and custom IDs — 29 September 2026
+
+55 tests pass. Browser testing uploaded exactly id/name/houseId/care of from the default import screen, automatically selected members, imported custom/numeric/mixed-case IDs with missing optional fields, and skipped all rows on repeat. The numeric member sequence is unchanged by custom IDs.

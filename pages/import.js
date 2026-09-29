@@ -87,6 +87,9 @@ export function render() {
       rows = result.rows;
       headers = result.headers;
       fileName = file.name;
+      const headerKeys = new Set(headers.map((h) => h.toLowerCase().replace(/[\s_]/g, "")));
+      if (headerKeys.has("id") && headerKeys.has("name") && headerKeys.has("houseid"))
+        kind.value = "members";
       mapping = Object.fromEntries(
         templates[kind.value].map((key) => [
           key,
@@ -111,7 +114,7 @@ export function render() {
       invalidate();
       validate.disabled = !rows.length;
       replace(manifestBox);
-      progress.textContent = `${rows.length} rows loaded from ${fileName}`;
+      progress.textContent = `${rows.length} ${kind.value} rows loaded from ${fileName}`;
     } catch (e) {
       showError(error, e);
     }

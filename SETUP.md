@@ -195,3 +195,7 @@ A minimal header with care of is `id,name,houseId,care of`. Care of is shown and
 ### Install as a Chrome app
 
 Open the production site in Chrome and select **Install Mahal app** in the sidebar or login page. Chrome may also show an install icon beside the address bar; alternatively use its menu → Cast, save and share → Install page as app. Confirm installation to open Mahal Accounts in its own window. The app icon and name are supplied by `manifest.webmanifest`; its relative URLs support both Vercel and the GitHub Pages repository path. Include this file and `assets/icon-192.png` / `assets/icon-512.png` on any static host. The installed app still needs an internet connection for Firebase authentication and accounting. It loads current files from the website when opened.
+
+### Four-column member upload and existing IDs
+
+Upload `id,name,houseId,care of`; the app recognizes member files from `houseId` and selects Members automatically. Missing optional columns stay blank. Member IDs may contain letters, digits and hyphens, such as `TMJBDR002`, `12345` or `member-Ab12`; their spelling and case are preserved. Use the same case when searching a public member ID. Only canonical numeric `M-000001` IDs affect automatic member numbering.
