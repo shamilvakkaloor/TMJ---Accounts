@@ -199,3 +199,9 @@ Open the production site in Chrome and select **Install Mahal app** in the sideb
 ### Four-column member upload and existing IDs
 
 Upload `id,name,houseId,care of`; the app recognizes member files from `houseId` and selects Members automatically. Missing optional columns stay blank. Member IDs may contain letters, digits and hyphens, such as `TMJBDR002`, `12345` or `member-Ab12`; their spelling and case are preserved. Use the same case when searching a public member ID. Only canonical numeric `M-000001` IDs affect automatic member numbering.
+
+## Startup snapshot
+
+The administrator workspace loads collections in parallel. The browser saves an account/project-scoped snapshot in IndexedDB for up to 24 hours. On every opening, Firebase authentication and a server-only revision check must succeed before that snapshot can be used. Changed revisions trigger a complete reload; imports and other successful edits update the snapshot after a short debounce. Signing out clears saved snapshots. Browser storage being unavailable does not prevent loading from Firestore. This does not enable offline access or offline writes.
+
+Use the app’s **Refresh data** button after editing documents directly in Firebase Console: it bypasses the snapshot even when the edit did not update meta/revision. Firebase rule edits do not require rebuilding the snapshot.

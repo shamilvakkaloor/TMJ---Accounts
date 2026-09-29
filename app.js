@@ -11,7 +11,7 @@ import {
 const root = document.getElementById("app");
 let generation = 0;
 try {
-  const [{ store, ready, setup }, { layout }, { routeInfo }] =
+  const [{ store, ready, setup, refresh }, { layout }, { routeInfo }] =
     await Promise.all([
       import("./lib/store.js"),
       import("./lib/layout.js"),
@@ -118,7 +118,12 @@ try {
             { class: "standalone" },
             el("h1", {}, "Unable to open this page"),
             el("p", { class: "alert danger", role: "alert" }, error.message),
-            button("Retry", render),
+            button("Retry", async () => {
+              if (protectedRoute && store.admin && store.error) {
+                try { await refresh(); } catch { /* render the latest load error */ }
+              }
+              await render();
+            }),
             link("Back to portal", "/"),
           ),
         );

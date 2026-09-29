@@ -43,3 +43,7 @@ Added a relative-scope web app manifest, 192/512 PNG icons derived from the exis
 ## Large member import — 29 September 2026
 
 56 automated tests pass. A browser test with 1,357 four-column members resumed five legacy per-row imports, added 1,352 in 271 groups with zero errors, then skipped all 1,357 on repeat. The local demo import took about 9.8 seconds; this is not a live-network timing claim. Firestore emulator tests passed for atomic five-house and five-member write batches with distinct parents, and rejected stale revisions, repeated operations and anonymous writes without partial records. Live rules were compared before publishing to preserve existing custom ID changes. No test records were written to the live database.
+
+## Startup performance — 29 September 2026
+
+62 automated tests pass, including revision-checked cache reuse, stale/incomplete/unavailable cache fallback, force refresh, denied/offline server checks and concurrent-write retries. A Chromium test against the local Firestore emulator loaded 1,357 members and 536 houses: the old loader made 21 collection queries; the new cold loader made 14 collection queries; repeat opening made one server revision read and no collection queries. Measured local opens were about 2.0 seconds old, 1.7 seconds cold and 0.7 seconds cached; these are emulator timings, not production-network guarantees. Browser checks verified all records, direct-console-style changes through forced refresh, sign-out cache removal and no page errors. No live records were changed.
