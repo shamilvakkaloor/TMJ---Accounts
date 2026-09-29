@@ -216,7 +216,7 @@ export function render() {
     const { id, data } = await job(),
       done = [];
     try {
-      if (kind.value === "houses") {
+      if (["houses", "members"].includes(kind.value)) {
         const prior = new Set(store.state.operations.flatMap((o) =>
           o.rowIds || (o.id.startsWith(id + "-") ? [o.id] : []),
         ));
@@ -237,7 +237,7 @@ export function render() {
           const batchId = `${id}-batch-${group[0].index}`;
           progress.textContent = `Importing ${group[0].index + 1}–${group.at(-1).index + 1} of ${data.length}…`;
           try {
-            await run({ type: "importHouseBatch", items: group.map(({ rowId, command }) => ({ rowId, command })) }, batchId);
+            await run({ type: kind.value === "houses" ? "importHouseBatch" : "importMemberBatch", items: group.map(({ rowId, command }) => ({ rowId, command })) }, batchId);
             for (const item of group) {
               manifest.push({ row: item.index + 2, status: "success", message: "Imported" });
               done.push(item.rowId);
@@ -258,7 +258,7 @@ export function render() {
           }
           try {
             if (batch.some((item) => item.command.value.id === data[i].id)) await flush();
-            batch.push({ index: i, rowId, command: rowCommand("houses", data[i], store.state, updateInput.checked, dateOrder.value) });
+            batch.push({ index: i, rowId, command: rowCommand(kind.value, data[i], store.state, updateInput.checked, dateOrder.value) });
           } catch (e) {
             manifest.push({ row: i + 2, status: "error", message: e.message });
           }

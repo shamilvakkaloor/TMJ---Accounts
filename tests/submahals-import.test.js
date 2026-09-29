@@ -76,7 +76,7 @@ describe("CSV joining dates", () => {
     validateBackup({ format: "mahal-backup-v1", data: next });
     assert.throws(() => apply(state, { ...cmd, items: [...items, items[0]] }), /at most 5/);
     assert.throws(() => apply(state, { ...cmd, items: [items[0], { ...items[1], rowId: items[0].rowId }] }), /row IDs must be unique/);
-    assert.throws(() => apply(state, { ...cmd, items: [items[0], { ...items[1], command: items[0].command }] }), /House IDs must be unique/);
+    assert.throws(() => apply(state, { ...cmd, items: [items[0], { ...items[1], command: items[0].command }] }), /Record IDs must be unique/);
   });
   it("preserves alphanumeric house IDs through CSV, member links, receipts and backup", () => {
     let s = fixture();

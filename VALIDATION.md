@@ -39,3 +39,7 @@ Added a relative-scope web app manifest, 192/512 PNG icons derived from the exis
 ## Four-column member CSV and custom IDs — 29 September 2026
 
 55 tests pass. Browser testing uploaded exactly id/name/houseId/care of from the default import screen, automatically selected members, imported custom/numeric/mixed-case IDs with missing optional fields, and skipped all rows on repeat. The numeric member sequence is unchanged by custom IDs.
+
+## Large member import — 29 September 2026
+
+56 automated tests pass. A browser test with 1,357 four-column members resumed five legacy per-row imports, added 1,352 in 271 groups with zero errors, then skipped all 1,357 on repeat. The local demo import took about 9.8 seconds; this is not a live-network timing claim. Firestore emulator tests passed for atomic five-house and five-member write batches with distinct parents, and rejected stale revisions, repeated operations and anonymous writes without partial records. Live rules were compared before publishing to preserve existing custom ID changes. No test records were written to the live database.

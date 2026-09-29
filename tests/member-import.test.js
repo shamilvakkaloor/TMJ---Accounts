@@ -7,6 +7,28 @@ import { documents } from "../domain/projection.js";
 import { validateBackup } from "../domain/backup.js";
 
 describe("optional member CSV fields", () => {
+  it("commits members together with resumable row markers and no partial invalid group", () => {
+    const s = fixture(), before = structuredClone(s);
+    const items = Array.from({ length: 5 }, (_, i) => ({
+      rowId: `csv-${i}`, command: rowCommand("members", {
+        id: `CUSTOM${i}`, name: `Member ${i}`, houseId: "H-000001", "care of": "Contact",
+      }, s),
+    }));
+    const cmd = { type: "importMemberBatch", items };
+    const next = apply(s, cmd, "member-group");
+    assert.equal(next.members.length, s.members.length + 5);
+    assert.equal(next.operations.length, s.operations.length + 1);
+    assert.equal(next.operations.at(-1).kind, "saveMember");
+    assert.deepEqual(next.operations.at(-1).rowIds, items.map(i => i.rowId));
+    assert.equal(apply(next, cmd, "member-group"), next);
+    assert.ok(next.members.slice(-5).every(m => m.careOf === "Contact" && !m.approved));
+    validateBackup({ format: "mahal-backup-v1", data: next });
+    const bad = structuredClone(cmd);
+    bad.items[4].command.value.houseId = "H-MISSING";
+    assert.throws(() => apply(s, bad));
+    assert.deepEqual(s, before);
+    assert.throws(() => apply(s, { ...cmd, items: [...items, items[0]] }), /at most 5/);
+  });
   it("imports four-column custom IDs without corrupting the member sequence", () => {
     let s = fixture();
     for (const id of ["TMJBDR002", "12345", "member-Ab12"]) {
