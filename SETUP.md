@@ -213,3 +213,9 @@ Open **Members & houses**, then choose **ID card** beside a member or house (als
 QR codes open the current public member/house profile at the same deployment where the card was generated. The public portal scanner supports the camera, uploading an ID-card image and pasting its QR link. House profiles list linked members even when financial history is private; they use existing public identity projections and do not expose care-of or private age/approval fields. Large lists use **Load more members**. Members link back to their household. Administrators can also use **Houses → View members**.
 
 Deploy the publicMembers version/houseId composite index from firestore.indexes.json in a new Firebase project. It is already deployed for tmj---accounts. No additional Firestore rule permissions or backend services are required.
+
+## Bulk ID cards
+
+Open **Bulk ID cards** in the administrator sidebar. Choose member or house cards and combine Sub Mahal, house, registration status, membership approval (members), household occupancy (houses), text search and joining-date filters. Unknown joining dates are excluded when a date boundary is set. Sort by name or ID. Changing a filter clears the selection.
+
+Choose individual records across pages or **Select all filtered**, then **Prepare selected cards**. Download the resulting PDFs; each file contains up to 100 card pages, including household continuation pages. Cards are generated sequentially with progress and cancellation so the browser does not retain hundreds of full-size canvases. Leaving the tab cancels generation. No records are modified. Individual PNG exports remain available through each record’s card preview.

@@ -3546,6 +3546,7 @@ input {
 .generated-card-sheet { margin: 24px 0; }
 .generated-card-sheet .print-toolbar { margin: 18px 0 32px; }
 .directory-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.bulk-card-filters { border: 0; padding: 0; margin: 0; min-width: 0; }
 .house-members { margin-top: 24px; }
 @media print {
   .card-page { width: 85.6mm; max-width: none; }

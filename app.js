@@ -22,6 +22,7 @@ try {
     "/login": "login",
     "/admin": "dashboard",
     "/admin/directory": "directory",
+    "/admin/id-cards": "bulk-cards",
     "/admin/funds": "funds",
     "/admin/receive": "payments",
     "/admin/receipts": "receipts",
