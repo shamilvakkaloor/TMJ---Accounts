@@ -221,3 +221,9 @@ Open **Bulk ID cards** in the administrator sidebar. Choose member or house card
 Choose individual records across pages or **Select all filtered**, then **Prepare selected cards**. Download the resulting PDFs; each file contains up to 100 card pages, including household continuation pages. Cards are generated sequentially with progress and cancellation so the browser does not retain hundreds of full-size canvases. Leaving the tab cancels generation. No records are modified. Individual PNG exports remain available through each record’s card preview.
 
 Payment due day is optional for funds and fund CSV imports. Blank means no deadline on newly generated dues. Clearing it does not change existing dues. Reports filter dues without deadlines by assessment period start (January 1 for annual, month start for monthly, fund start for one-time funds).
+
+## Advance payments for all funds
+
+In **Receive payment**, select a fund, choose **Payment allocation → Pay in advance**, enter the year (annual), month (monthly), or configured campaign (one-time), and enter the amount. This is available for member and house funds, including existing funds whose old advance flag was off. Explicit fixed-fund advances leave old dues untouched and create payer/fund credit for the selected period. New assessments apply eligible credit automatically; existing assessments can use **Funds & dues → Apply advance**. One-time credits must match the same campaign.
+
+Normal fixed-fund payments still settle outstanding dues first. Excess becomes next-year credit for annual funds, next-month credit for monthly funds, or credit for the same one-time campaign. Voluntary funds accept upfront contributions tagged with the selected period; they do not create a credit balance because they have no assessed dues. Receipts and cashbook entries record the actual collection date. Existing refund and reversal controls remain available.

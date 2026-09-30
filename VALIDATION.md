@@ -59,3 +59,7 @@ Added a relative-scope web app manifest, 192/512 PNG icons derived from the exis
 ## Optional payment due day — 30 September 2026
 
 69 tests pass. Covered blank/missing CSV values, clearing due day, preserving existing deadlines, new dues without deadlines, report date filtering and invalid numeric inputs. Browser checks confirmed clearing/saving/reopening a fund and a blank default on new funds. No live records were changed.
+
+## All-fund advances — 30 September 2026
+
+79 tests pass, covering advance creation/application/refund for annual, monthly and one-time funds targeting either members or houses, explicit preservation of old dues, invalid periods, December rollover, voluntary upfront contributions and campaign isolation. Browser testing posted a monthly house advance and checked its receipt, amount, payer and chosen period. Firestore emulator checks passed the six fixed-fund combinations through payment, application and refund, plus a voluntary upfront receipt. No production records were modified by testing; no rules changes were needed.

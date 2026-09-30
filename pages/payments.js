@@ -13,7 +13,7 @@ import {
   notify,
 } from "../lib/dom.js";
 import { store, run } from "../lib/store.js";
-import { execute } from "../domain/engine.js";
+import { execute, nextAdvancePeriod } from "../domain/engine.js";
 import { money, sum, outstanding, paise } from "../domain/utils.js";
 import { today, uid } from "../lib/browser.js";
 export function render({ params }) {
@@ -94,6 +94,19 @@ export function render({ params }) {
     replace(
       allocations,
       ...lines.map((line, index) => {
+        const selectedFund = s.funds.find(f => f.id === line.fundId);
+        const allocation = select("allocation", [["normal", "Pay dues / contribution"], ["advance", "Pay in advance"]], line.allocation || "normal");
+        const period = input("advancePeriod", line.advancePeriod || (selectedFund ? nextAdvancePeriod(selectedFund, date.value) : ""), {
+          type: selectedFund?.frequency === "monthly" ? "month" : "text",
+          placeholder: selectedFund?.frequency === "annual" ? "YYYY" : "Campaign ID",
+          readOnly: selectedFund?.frequency === "one_time",
+        });
+        allocation.addEventListener("change", () => {
+          line.allocation = allocation.value; line.dueId = "";
+          line.advancePeriod = selectedFund ? nextAdvancePeriod(selectedFund, date.value) : "";
+          drawLines(); update();
+        });
+        period.addEventListener("input", () => { line.advancePeriod = period.value; update(); });
         const fund = select(
             "fund",
             [
@@ -128,6 +141,8 @@ export function render({ params }) {
         fund.addEventListener("change", () => {
           line.fundId = fund.value;
           line.dueId = "";
+          line.advancePeriod = "";
+          if (line.allocation === "advance" && fund.value) line.advancePeriod = nextAdvancePeriod(s.funds.find(f => f.id === fund.value), date.value);
           drawLines();
           update();
         });
@@ -145,7 +160,10 @@ export function render({ params }) {
           grid(
             field("Fund", fund),
             field("Amount (₹)", amount),
-            field("Period allocation", due),
+            field("Payment allocation", allocation),
+            line.allocation === "advance"
+              ? field("Advance period", period, selectedFund?.mode === "voluntary" ? "Upfront contribution for this period; voluntary funds do not create credit balances." : "Held as credit for this payer and fund. Apply it when the period's dues are generated, or use Funds & dues → Apply advance.")
+              : field("Period allocation", due, "Fixed-fund excess becomes an advance for the next year/month, or the same one-time campaign."),
             lines.length > 1 &&
               button(
                 "Remove line",
@@ -179,8 +197,11 @@ export function render({ params }) {
             fundId: l.fundId,
             amount: paise(l.amount),
             ...(l.dueId ? { dueId: l.dueId } : {}),
+            ...(l.allocation === "advance" ? { advancePeriod: l.advancePeriod || "" } : {}),
           })),
       };
+      if (lines.some(l => l.fundId && l.amount && l.allocation === "advance" && !l.advancePeriod))
+        throw new Error("Choose an advance period.");
       if (payer.value && command.lines.length)
         preview = execute(store.state, command, {
           operationId,

@@ -257,11 +257,7 @@ export function render() {
             ),
           ),
           check("Active fund", "active", old.active ?? true),
-          check(
-            "Allow next-year advances (annual member fund only)",
-            "advance",
-            old.advance || false,
-          ),
+          el("p", { class: "hint-box" }, "Advance payments are available for all funds. Fixed-fund advances stay as credit; voluntary contributions are recorded for the selected period."),
           old.rates?.length &&
             table(
               ["Existing rate from", "Rate"],
@@ -287,7 +283,7 @@ export function render() {
             dueDay: str(data, "dueDay") ? Number(str(data, "dueDay")) : null,
             campaign: str(data, "campaign"),
             active: data.has("active"),
-            advance: data.has("advance"),
+            advance: true,
             eligibleIds: str(data, "eligibleIds")
               .split(/[\s,]+/)
               .filter(Boolean),
@@ -386,7 +382,7 @@ export function render() {
                   c.payerId === payer.id &&
                   c.fundId === fund.id &&
                   c.amount > 0 &&
-                  c.period <= period.value,
+                  (fund.frequency === "one_time" ? c.period === period.value : c.period <= period.value),
               )) {
                 const due = store.state.dues.find((d) => d.id === dueId),
                   amount = Math.min(credit.amount, outstanding(due));

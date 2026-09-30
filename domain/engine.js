@@ -36,6 +36,12 @@ export function periodStart(f, p) {
   assert(p === f.campaign && !!p, "Choose the configured campaign.");
   return f.start;
 }
+export function nextAdvancePeriod(f, date) {
+  if (f.frequency === "one_time") return f.campaign;
+  if (f.frequency === "annual") return String(Number(date.slice(0, 4)) + 1);
+  const year = Number(date.slice(0, 4)), month = Number(date.slice(5, 7));
+  return `${year + (month === 12 ? 1 : 0)}-${String(month === 12 ? 1 : month + 1).padStart(2, "0")}`;
+}
 export function rateFor(f, date) {
   return [...f.rates]
     .sort((a, b) => b.from.localeCompare(a.from))
@@ -327,13 +333,6 @@ export function execute(current, cmd, ctx) {
       });
       assert(f.mode === "voluntary" || f.rates.length > 0, "Add a fixed rate.");
       assert(
-        !f.advance ||
-          (f.target === "member" &&
-            f.frequency === "annual" &&
-            f.mode === "fixed"),
-        "Advance allocation is for annual member funds.",
-      );
-      assert(
         f.frequency !== "one_time" ||
           (/^[\w-]+$/.test(f.campaign) && f.eligibleIds.length > 0),
         "One-time funds need a campaign ID and eligible payers.",
@@ -499,6 +498,14 @@ export function execute(current, cmd, ctx) {
           "A receipt can contain funds for only this payer type.",
         );
         assert(f.active, "This fund is inactive.");
+        const advancePeriod = input.advancePeriod;
+        if (advancePeriod) {
+          assert(typeof advancePeriod === "string", "Choose a valid advance period.");
+          assert(!cmd.historical && !input.dueId, "Choose either an advance or an existing due.");
+          const start = periodStart(f, advancePeriod);
+          assert(f.frequency === "one_time" || advancePeriod >= cmd.date.slice(0, f.frequency === "monthly" ? 7 : 4), "Advance period cannot precede the payment period.");
+          assert(!f.end || start <= f.end, "Advance period is after the fund ends.");
+        }
         let remaining = input.amount;
         if (cmd.historical) {
           add(
@@ -509,7 +516,7 @@ export function execute(current, cmd, ctx) {
           continue;
         }
         if (f.mode === "voluntary") {
-          add(f, remaining, cmd.date.slice(0, 4));
+          add(f, remaining, advancePeriod || (f.frequency === "one_time" ? f.campaign : cmd.date.slice(0, f.frequency === "monthly" ? 7 : 4)));
           continue;
         }
         const dues = s.dues
@@ -518,6 +525,7 @@ export function execute(current, cmd, ctx) {
               d.payerId === cmd.payerId &&
               d.fundId === f.id &&
               outstanding(d) > 0 &&
+              !advancePeriod &&
               (!input.dueId || d.id === input.dueId),
           )
           .sort((a, b) => a.period.localeCompare(b.period));
@@ -529,10 +537,10 @@ export function execute(current, cmd, ctx) {
           remaining -= n;
         }
         if (remaining) {
-          assert(
-            f.advance,
-            "This amount exceeds assessed dues. Return the change or assess the intended period first.",
-          );
+          const period = advancePeriod || nextAdvancePeriod(f, cmd.date);
+          const start = periodStart(f, period);
+          assert(f.frequency !== "one_time" || f.eligibleIds.includes(cmd.payerId), "This payer is not eligible for the campaign.");
+          assert(!f.end || start <= f.end, "Advance period is after the fund ends. Return the excess or choose another period.");
           const cid = `${id}_${lines.length}`;
           s.credits.push({
             id: cid,
@@ -540,11 +548,11 @@ export function execute(current, cmd, ctx) {
             fundId: f.id,
             receiptId: id,
             amount: 0,
-            period: String(Number(cmd.date.slice(0, 4)) + 1),
+            period,
             lastOperation: op.id,
           });
           adjust("credit", cid, "amount", remaining);
-          add(f, remaining, String(Number(cmd.date.slice(0, 4)) + 1), "", cid);
+          add(f, remaining, period, "", cid);
         }
       }
       assert(
@@ -639,7 +647,8 @@ export function execute(current, cmd, ctx) {
         c.payerId === d.payerId && c.fundId === d.fundId,
         "Credit must stay with the same payer and fund.",
       );
-      assert(d.period >= c.period, "Advance belongs to a later period.");
+      assert(get(s.funds, c.fundId).frequency === "one_time" ? d.period === c.period : d.period >= c.period,
+        "Advance belongs to a different campaign or a later period.");
       assert(
         cmd.amount <= c.amount && cmd.amount <= outstanding(d),
         "Amount exceeds available credit or outstanding due.",
