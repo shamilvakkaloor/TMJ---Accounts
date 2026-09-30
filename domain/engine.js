@@ -352,16 +352,10 @@ export function execute(current, cmd, ctx) {
         for (const r of old.rates)
           assert(
             f.rates.some((n) => n.from === r.from && n.amount === r.amount),
-            "Existing rates are immutable; add a future rate.",
-          );
-        for (const r of f.rates.filter(
-          (n) => !old.rates.some((o) => o.from === n.from),
-        ))
-          assert(
-            r.from > day,
-            "New rates on an existing fund must start in the future.",
+            "Saved rates cannot be changed; add a rate with a different effective date.",
           );
       }
+      f.rates = [...f.rates].sort((a, b) => a.from.localeCompare(b.from));
       put(s.funds, f);
       op.description = `Updated fund ${f.title}`;
       break;

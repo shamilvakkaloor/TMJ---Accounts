@@ -63,3 +63,7 @@ Added a relative-scope web app manifest, 192/512 PNG icons derived from the exis
 ## All-fund advances — 30 September 2026
 
 79 tests pass, covering advance creation/application/refund for annual, monthly and one-time funds targeting either members or houses, explicit preservation of old dues, invalid periods, December rollover, voluntary upfront contributions and campaign isolation. Browser testing posted a monthly house advance and checked its receipt, amount, payer and chosen period. Firestore emulator checks passed the six fixed-fund combinations through payment, application and refund, plus a voluntary upfront receipt. No production records were modified by testing; no rules changes were needed.
+
+## Multiple historical fund rates — 30 September 2026
+
+81 tests pass. Coverage verifies ₹500 from 2016 and ₹1,000 from 2020 for annual/monthly assessments, chronological storage, historical rate insertion after payment without modifying existing dues/receipts, and duplicate-date/immutable-rate protection. Browser checks added multiple rows in one fund, removed an unsaved row, reopened saved history, inserted a past rate on an assessed fund, and confirmed the assessment preview shows the selected year’s amount. No live records were modified.

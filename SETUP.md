@@ -118,7 +118,7 @@ Use **Settings → Add Sub Mahal** to create one by name; its ID is generated au
 
 **Receipt contact** is a public phone number or email printed on receipts and the member portal; it is unrelated to login. **Accounting cutover date** is when live accounting begins: receipts before that date are statement-only imports and do not change wallet balances, while cashbook entries must be on or after cutover. For example, with cutover `2026-01-01`, a 2025 receipt is historical and a 2026 receipt is posted normally. House/member joining dates remain their actual registration dates and affect assessment eligibility; do not replace them with cutover.
 
-Create the real funds: member/house target, fixed/voluntary mode, frequency, start/end dates and rates. Fixed rates are dated; later changes do not alter assessed dues or original receipts. Annual assessments use January and a configurable due day from 1–28. One-time campaigns require explicit eligible payer IDs. Advances apply only to annual fixed member funds.
+Create the real funds: member/house target, fixed/voluntary mode, frequency, start/end dates and rates. Fixed rates are dated; later changes do not alter assessed dues or original receipts. Annual assessments use the January rate and an optional due day from 1–28. One-time campaigns require explicit eligible payer IDs. Advance payments are available for all funds; see the advance-payment section below.
 
 Import existing records through **Import & backup**, in this order:
 
@@ -227,3 +227,9 @@ Payment due day is optional for funds and fund CSV imports. Blank means no deadl
 In **Receive payment**, select a fund, choose **Payment allocation → Pay in advance**, enter the year (annual), month (monthly), or configured campaign (one-time), and enter the amount. This is available for member and house funds, including existing funds whose old advance flag was off. Explicit fixed-fund advances leave old dues untouched and create payer/fund credit for the selected period. New assessments apply eligible credit automatically; existing assessments can use **Funds & dues → Apply advance**. One-time credits must match the same campaign.
 
 Normal fixed-fund payments still settle outstanding dues first. Excess becomes next-year credit for annual funds, next-month credit for monthly funds, or credit for the same one-time campaign. Voluntary funds accept upfront contributions tagged with the selected period; they do not create a credit balance because they have no assessed dues. Receipts and cashbook entries record the actual collection date. Existing refund and reversal controls remain available.
+
+## Multiple dated amounts for one fund
+
+In **Funds & dues → Create fund / Edit → Rate history**, use **+ Add rate** to enter any number of amount/effective-date rows before saving. For example, ₹500 from 2016-01-01 and ₹1,000 from 2020-01-01 belong to the same fund. Set the fund start date to its actual start (2016 in this example). Dates may be historical or future, including when the fund already has dues or receipts. Saved rate entries remain read-only; new entries must use distinct effective dates and positive amounts. Unsaved rows can be removed.
+
+Generate dues for the required year/month to use the matching rate; the assessment preview shows the amount and effective date. Annual dues use January 1, monthly dues use the month start, and one-time dues use the fund start. If the fund starts later in an assessment period, its start date is used. There is no automatic prorating. Adding a rate never rewrites existing assessments or receipts; it applies to assessments generated afterward.

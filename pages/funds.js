@@ -19,7 +19,7 @@ import {
   showError,
 } from "../lib/dom.js";
 import { store, run } from "../lib/store.js";
-import { assessmentPreview } from "../domain/engine.js";
+import { assessmentPreview, periodStart, rateFor } from "../domain/engine.js";
 import { money, sum, outstanding, dueStatus, paise } from "../domain/utils.js";
 import { today, uid } from "../lib/browser.js";
 export function render() {
@@ -175,6 +175,31 @@ export function render() {
   function edit(old = {}) {
     const date = today(),
       modal = dialog(old.id ? "Edit fund" : "Create fund", [], true);
+    const rateRows = el("div");
+    const mode = select("mode", [["fixed", "Fixed due"], ["voluntary", "Voluntary donation"]], old.mode || "fixed");
+    const startInput = input("start", old.start || date.slice(0, 4) + "-01-01", { type: "date", required: true });
+    function addRate() {
+      const row = el("div", { class: "rate-entry" });
+      row.append(grid(
+        field("Rate effective from", input("rateFrom", old.id ? "" : startInput.value, { type: "date", required: true })),
+        field("Amount (₹)", input("rateAmount", "", { type: "number", min: "0.01", step: "0.01", required: true })),
+        button("Remove rate", () => row.remove(), "text-link danger-text"),
+      ));
+      rateRows.append(row);
+    }
+    const rateEditor = el("section", { class: "fund-rate-editor" },
+      el("h3", {}, "Rate history"),
+      el("p", { class: "muted" }, "Add each amount and the date it started. Example: ₹500 from 01-01-2016, then ₹1,000 from 01-01-2020. Historical and future dates are accepted. Saved dues and receipts retain their original amounts."),
+      old.rates?.length ? table(["Effective from", "Saved amount"], [...old.rates].sort((a, b) => a.from.localeCompare(b.from)).map(r => [r.from, money(r.amount)])) : null,
+      rateRows, button("+ Add rate", addRate, "button secondary"),
+      el("p", { class: "muted" }, "New dues use the rate effective at the start of the assessment period (January 1 for annual dues, month start for monthly dues), or the fund start date if later. Rates are not prorated. Saved rate entries are read-only."),
+    );
+    if (!old.id) addRate();
+    function toggleRates() {
+      rateEditor.hidden = mode.value !== "fixed";
+      rateRows.querySelectorAll("input").forEach(control => { control.disabled = mode.value !== "fixed"; });
+    }
+    mode.addEventListener("change", toggleRates); toggleRates();
     modal.body.append(
       form(
         [
@@ -205,33 +230,11 @@ export function render() {
             ),
             field(
               "Amount mode",
-              select(
-                "mode",
-                [
-                  ["fixed", "Fixed due"],
-                  ["voluntary", "Voluntary donation"],
-                ],
-                old.mode || "fixed",
-              ),
-            ),
-            field(
-              old.id ? "Add future rate (₹)" : "Rate (₹)",
-              input("amount", "", {
-                type: "number",
-                step: "0.01",
-                min: "0.01",
-              }),
-            ),
-            field(
-              "Rate effective from",
-              input("rateFrom", date, { type: "date" }),
+              mode,
             ),
             field(
               "Fund starts",
-              input("start", old.start || date.slice(0, 4) + "-01-01", {
-                type: "date",
-                required: true,
-              }),
+              startInput,
             ),
             field(
               "Fund ends (optional)",
@@ -258,20 +261,15 @@ export function render() {
           ),
           check("Active fund", "active", old.active ?? true),
           el("p", { class: "hint-box" }, "Advance payments are available for all funds. Fixed-fund advances stay as credit; voluntary contributions are recorded for the selected period."),
-          old.rates?.length &&
-            table(
-              ["Existing rate from", "Rate"],
-              old.rates.map((r) => [r.from, money(r.amount)]),
-            ),
+          rateEditor,
         ],
         "Save fund",
         async (data) => {
           const rates = [...(old.rates || [])];
-          if (str(data, "amount"))
-            rates.push({
-              from: str(data, "rateFrom"),
-              amount: paise(str(data, "amount")),
-            });
+          if (str(data, "mode") === "fixed") {
+            const dates = data.getAll("rateFrom"), amounts = data.getAll("rateAmount");
+            for (let i = 0; i < dates.length; i++) rates.push({ from: String(dates[i]), amount: paise(String(amounts[i])) });
+          }
           const value = {
             id: old.id || "fund-" + uid().slice(0, 8),
             title: str(data, "title"),
@@ -331,7 +329,9 @@ export function render() {
     }
     function show() {
       try {
-        preview.textContent = `${candidates().payers.length} eligible payers. Existing assessments are never duplicated. Available advances will be applied.`;
+        const start = periodStart(fund, period.value), rate = rateFor(fund, start < fund.start ? fund.start : start);
+        if (!rate) throw new Error("No rate covers this period. Add its historical rate before generating dues.");
+        preview.textContent = `${candidates().payers.length} eligible payers · ${money(rate.amount)} each (rate from ${rate.from}). Existing assessments are never duplicated. Available advances will be applied.`;
       } catch (e) {
         preview.textContent = e.message;
       }
