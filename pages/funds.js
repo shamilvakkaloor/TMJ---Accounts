@@ -238,13 +238,13 @@ export function render() {
               input("end", old.end, { type: "date" }),
             ),
             field(
-              "Payment due day (1–28)",
-              input("dueDay", old.dueDay || 28, {
+              "Payment due day (optional, 1–28)",
+              input("dueDay", old.dueDay ?? "", {
                 type: "number",
                 min: 1,
                 max: 28,
-                required: true,
               }),
+              "Leave blank for no payment deadline. Applies to newly generated dues.",
             ),
             field("One-time campaign ID", input("campaign", old.campaign)),
           ),
@@ -284,7 +284,7 @@ export function render() {
             mode: str(data, "mode"),
             start: str(data, "start"),
             end: str(data, "end"),
-            dueDay: Number(str(data, "dueDay")),
+            dueDay: str(data, "dueDay") ? Number(str(data, "dueDay")) : null,
             campaign: str(data, "campaign"),
             active: data.has("active"),
             advance: data.has("advance"),

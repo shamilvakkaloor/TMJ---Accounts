@@ -211,7 +211,7 @@ export function rowCommand(kind, r, state, update = false, dateOrder = "DMY") {
         start: r.start,
         end: r.end || "",
         active: true,
-        dueDay: Number(r.dueDay || 28),
+        dueDay: String(r.dueDay ?? "").trim() ? Number(r.dueDay) : null,
         advance: truth("advance"),
         campaign: r.campaign || "",
         eligibleIds: (r.eligibleIds || "").split(/[;\s]+/).filter(Boolean),

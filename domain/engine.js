@@ -301,15 +301,15 @@ export function execute(current, cmd, ctx) {
       break;
     }
     case "saveFund": {
-      const f = cmd.value;
+      const f = { ...cmd.value, dueDay: cmd.value.dueDay == null || cmd.value.dueDay === "" ? null : cmd.value.dueDay };
       assert(
         f.id && /^[\w-]+$/.test(f.id) && f.title.trim(),
         "A fund needs a title and a valid ID.",
       );
       assert(validDate(f.start), "Invalid fund start date.");
       assert(
-        f.dueDay >= 1 && f.dueDay <= 28,
-        "Due day must be between 1 and 28.",
+        f.dueDay === null || Number.isInteger(f.dueDay) && f.dueDay >= 1 && f.dueDay <= 28,
+        "Due day must be blank or a whole number between 1 and 28.",
       );
       assert(
         ["member", "house"].includes(f.target) &&
@@ -445,7 +445,7 @@ export function execute(current, cmd, ctx) {
       const amount = cmd.assessed ?? rate.amount;
       positive(amount);
       const dueDate =
-        start.slice(0, 7) + "-" + String(f.dueDay).padStart(2, "0");
+        f.dueDay == null || f.dueDay === "" ? "" : start.slice(0, 7) + "-" + String(f.dueDay).padStart(2, "0");
       s.dues.push({
         id,
         payerId: p.id,

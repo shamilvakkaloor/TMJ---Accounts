@@ -55,3 +55,7 @@ Added a relative-scope web app manifest, 192/512 PNG icons derived from the exis
 ## Bulk ID cards — 29 September 2026
 
 67 automated tests pass. Added combined-filter and 205-record PDF partition coverage, including deduplication and household continuation pages. Browser checks verified sidebar routing, selection across pages, filter-change selection clearing, approval/occupancy filters, invalid date ranges, three PDF parts for 205 records, cancellation without partial download, a five-page PDF export and mobile overflow. Poppler confirmed the exported page count and 85.6 × 54 mm page size; the rendered output was visually reviewed. All test records stayed in local demo storage.
+
+## Optional payment due day — 30 September 2026
+
+69 tests pass. Covered blank/missing CSV values, clearing due day, preserving existing deadlines, new dues without deadlines, report date filtering and invalid numeric inputs. Browser checks confirmed clearing/saving/reopening a fund and a blank default on new funds. No live records were changed.

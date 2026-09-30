@@ -1,4 +1,5 @@
 import { sum, outstanding } from "./utils.js";
+import { periodStart } from "./engine.js";
 export function reportData(s, { from, to, sub = "", fund = "" }) {
   const ledger = s.ledger.filter((l) => l.date >= from && l.date <= to);
   const operations = s.operations.filter(
@@ -30,11 +31,12 @@ export function reportData(s, { from, to, sub = "", fund = "" }) {
         };
       }),
   );
+  const reportDate = (d) => d.dueDate || periodStart(s.funds.find(f => f.id === d.fundId), d.period);
   const dues = s.dues.filter(
     (d) =>
       (!fund || d.fundId === fund) &&
-      d.dueDate >= from &&
-      d.dueDate <= to &&
+      reportDate(d) >= from &&
+      reportDate(d) <= to &&
       outstanding(d) > 0 &&
       (!sub ||
         (() => {

@@ -175,7 +175,7 @@ export function render() {
         el(
           "p",
           { class: "table-note" },
-          "Current balances for dues dated in this range; Sub Mahal uses current household assignment. This is not a historical as-of receivable statement.",
+          "Current balances for dues in this range. Dues without a deadline use their assessment period start for date filtering. Sub Mahal uses current household assignment. This is not a historical as-of receivable statement.",
         ),
         table(
           [
