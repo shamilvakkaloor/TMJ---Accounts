@@ -9,6 +9,7 @@ import {
 } from "./utils.js";
 export const MAX_ALLOCATIONS = 4;
 import { MAX_SUB_MAHALS, subMahalDeletionError } from "./submahals.js";
+import { removalPlan } from "./directory.js";
 const get = (a, id) => {
   const v = a.find((x) => x.id === id);
   assert(v, `Record ${id} was not found.`);
@@ -93,6 +94,16 @@ function changeHistory(history, date, value) {
   return h.sort((a, b) => a.date.localeCompare(b.date));
 }
 export function execute(current, cmd, ctx) {
+  if (cmd.type === "transferMember") {
+    if (current.operations.some(o => o.id === ctx.operationId)) return current;
+    const member = get(current.members, cmd.id);
+    assert(member.houseId === cmd.fromHouseId, "The member's house changed. Refresh and review the transfer.");
+    assert(member.houseId !== cmd.houseId, "Choose a different destination house.");
+    const house = get(current.houses, cmd.houseId);
+    assert(house.active, "Choose an active destination house.");
+    assert(cmd.date >= house.joined, "The destination house was not registered on this date.");
+    return execute(current, { type: "saveMember", value: { ...member, houseId: cmd.houseId, effectiveDate: cmd.date } }, ctx);
+  }
   if (["importHouseBatch", "importMemberBatch"].includes(cmd.type)) {
     const recordType = cmd.type === "importHouseBatch" ? "houses" : "members";
     const saveType = recordType === "houses" ? "saveHouse" : "saveMember";
@@ -211,6 +222,28 @@ export function execute(current, cmd, ctx) {
       "Please give a reason (at least 3 characters).",
     );
   switch (cmd.type) {
+    case "removeRecords": {
+      assert(["member", "house"].includes(cmd.recordType), "Choose members or houses.");
+      assert(Array.isArray(cmd.ids) && cmd.ids.length > 0 && cmd.ids.length <= 5 && new Set(cmd.ids).size === cmd.ids.length, "Remove up to five distinct records per group.");
+      reason();
+      const plan = removalPlan(s, cmd.recordType, cmd.ids);
+      assert(plan.every(p => p.action !== "missing"), "A record no longer exists. Refresh and review the selection.");
+      // The UI confirms this exact plan; never silently change an archive into a deletion.
+      assert(JSON.stringify(plan.map(p => [p.id, p.action])) === JSON.stringify(cmd.plan), "The removal plan changed. Refresh and review it again.");
+      op.recordType = cmd.recordType;
+      op.deletedIds = plan.filter(p => p.action === "delete").map(p => p.id);
+      op.archivedIds = plan.filter(p => p.action === "archive").map(p => p.id);
+      assert(op.deletedIds.length + op.archivedIds.length > 0, "These records are already inactive and must be retained.");
+      const collection = cmd.recordType === "member" ? "members" : "houses";
+      s[collection] = s[collection].filter(p => !op.deletedIds.includes(p.id));
+      for (const p of s[collection].filter(p => op.archivedIds.includes(p.id))) {
+        p.active = false;
+        p.inactiveDate = p.inactiveDate && p.inactiveDate < day ? p.inactiveDate : day;
+        assert(!p.joined || p.inactiveDate >= p.joined, "A future registration cannot be archived before its joining date.");
+      }
+      op.description = `Removed ${cmd.recordType} records: ${plan.map(p => `${p.record.name} (${p.id}): ${p.action}`).join("; ")}`;
+      break;
+    }
     case "saveHouse": {
       const v = cmd.value;
       assert(
@@ -286,8 +319,12 @@ export function execute(current, cmd, ctx) {
       let history = old?.houseHistory ?? [{ date: v.joined || date, value: v.houseId }];
       if (old && !old.joined && v.joined && v.joined < history[0].date)
         history = [{ date: v.joined, value: history[0].value }, ...history];
-      if (old && old.houseId !== v.houseId)
+      if (old && old.houseId !== v.houseId) {
+        assert(date <= day && date >= history.at(-1).date, "Move date must be on or after the latest house assignment and no later than today.");
+        const destination = get(s.houses, v.houseId);
+        assert(destination.active && date >= destination.joined, "Choose a house active and registered on the move date.");
         history = changeHistory(history, date, v.houseId);
+      }
       assert(
         !v.inactiveDate ||
           (validDate(v.inactiveDate) && v.inactiveDate >= v.joined),
@@ -304,6 +341,8 @@ export function execute(current, cmd, ctx) {
         houseId: atDate(history, day) ?? v.houseId,
       });
       op.description = `${old ? "Updated" : "Registered"} member ${id}`;
+      if (old && old.houseId !== v.houseId)
+        op.description = `Transferred member ${id} from ${old.houseId} to ${v.houseId}, effective ${date}; member dues and advances retained`;
       break;
     }
     case "saveFund": {

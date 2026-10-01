@@ -233,3 +233,15 @@ Normal fixed-fund payments still settle outstanding dues first. Excess becomes n
 In **Funds & dues → Create fund / Edit → Rate history**, use **+ Add rate** to enter any number of amount/effective-date rows before saving. For example, ₹500 from 2016-01-01 and ₹1,000 from 2020-01-01 belong to the same fund. Set the fund start date to its actual start (2016 in this example). Dates may be historical or future, including when the fund already has dues or receipts. Saved rate entries remain read-only; new entries must use distinct effective dates and positive amounts. Unsaved rows can be removed.
 
 Generate dues for the required year/month to use the matching rate; the assessment preview shows the amount and effective date. Annual dues use January 1, monthly dues use the month start, and one-time dues use the fund start. If the fund starts later in an assessment period, its start date is used. There is no automatic prorating. Adding a rate never rewrites existing assessments or receipts; it applies to assessments generated afterward.
+
+## Directory deletion and member transfers
+
+**Members & houses → Houses → Add house** already supports houses without any registered member, including women-only households. The **Without members** filter finds these houses.
+
+Use **Delete** beside a record, or combine search, Sub Mahal, status and house/household-occupancy filters and choose **Delete filtered members/houses**. The preview covers all matching pages and lists each planned action. Unused records are permanently deleted together with their public profiles. Records referenced by dues, credits, receipts, fund eligibility, or current/previous household membership are retained and made inactive. Already inactive referenced records remain unchanged. This does not delete payments, transfer balances, or automatically remove a house's members. Inactive records remain available through the status filter and can be reactivated with Edit. Export a backup from Import & backup before large cleanups if you need a recovery copy.
+
+Enter a reason and type REMOVE to confirm the preview. Cleanup runs in atomic groups of up to five with progress. If interrupted, completed groups remain saved; refresh and review the remaining records before continuing. No cleanup runs merely by opening the preview.
+
+Use **Transfer** beside a member or **Transfer member** in their details. Select an active destination house in any Sub Mahal and the move date, on or after the latest house assignment and no later than today. The destination house must have been registered by that date. Member dues and advances remain on the permanent member ID and remain payable/applicable after the move. House dues remain with their house. Existing receipts retain their original house/Sub Mahal; later payments use the house assignment effective on the payment date. Record details show house history. Regenerate ID cards after a move.
+
+Deploy the updated `firestore.rules` before using directory deletion on another Firebase project. No migration or new index is required. The app keeps an audit entry for every cleanup group and transfer.
