@@ -67,3 +67,7 @@ Added a relative-scope web app manifest, 192/512 PNG icons derived from the exis
 ## Multiple historical fund rates — 30 September 2026
 
 81 tests pass. Coverage verifies ₹500 from 2016 and ₹1,000 from 2020 for annual/monthly assessments, chronological storage, historical rate insertion after payment without modifying existing dues/receipts, and duplicate-date/immutable-rate protection. Browser checks added multiple rows in one fund, removed an unsaved row, reopened saved history, inserted a past rate on an assessed fund, and confirmed the assessment preview shows the selected year’s amount. No live records were modified.
+
+## Workspace UI refresh — 1 October 2026
+
+81 tests pass. The syntax checker now explicitly parses source as ES modules. Chromium checks covered all 11 administrator routes at 1440, 820 and 390px widths with no page overflow or uncaught errors; mobile drawer opening, link selection, Escape and keyboard focus wrapping; fund-dialog controls; refresh; dashboard shortcuts; and the login layout. Desktop and phone screenshots were visually reviewed. The new stylesheet is screen-only: printed member cards and receipts still produce one page at 85.6 × 54mm and A6 respectively, confirmed with Poppler. All browser checks used fictional local demo records; no live records were changed.

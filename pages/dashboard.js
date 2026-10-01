@@ -8,6 +8,7 @@ import {
   displayDate,
 } from "../domain/utils.js";
 import { today } from "../lib/browser.js";
+import { icon } from "../lib/icons.js";
 export function render() {
   const s = store.state,
     date = today(s.settings[0].timezone),
@@ -22,11 +23,39 @@ export function render() {
   );
   return el(
     "div",
-    {},
+    { class: "dashboard-page" },
     pageTitle(
-      "A clear view of your community.",
-      "Membership, contributions and accounts, connected in one place.",
+      "Your community, at a glance.",
+      "Manage contributions, keep records up to date, and plan what comes next.",
       [link("+ Receive payment", "/admin/receive", "button primary")],
+    ),
+    el(
+      "div",
+      { class: "quick-actions", "aria-label": "Quick actions" },
+      [
+        [
+          "people",
+          "Members & houses",
+          "View your community",
+          "/admin/directory",
+        ],
+        ["funds", "Funds & dues", "Rates, dues and advances", "/admin/funds"],
+        [
+          "cards",
+          "Create ID cards",
+          "Individual or bulk cards",
+          "/admin/id-cards",
+        ],
+        ["chart", "View reports", "Collections and balances", "/admin/reports"],
+      ].map(([symbol, title, detail, route]) => {
+        const content = el(
+          "span",
+          { class: "quick-action-inner" },
+          el("span", { class: "quick-action-icon" }, icon(symbol, 23)),
+          el("span", {}, el("strong", {}, title), el("small", {}, detail)),
+        );
+        return link(content, route, "quick-action");
+      }),
     ),
     el(
       "div",

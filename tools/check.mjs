@@ -13,11 +13,17 @@ const files = [
   ...["lib", "domain", "pages", "tools", "tests", "vendor"].flatMap(walk),
 ].filter((p) => /\.m?js$/.test(p));
 for (const file of files) {
-  const result = spawnSync(process.execPath, ["--check", resolve(root, file)], {
-    encoding: "utf8",
-  });
+  const source = readFileSync(resolve(root, file), "utf8");
+  const result = spawnSync(
+    process.execPath,
+    ["--input-type=module", "--check"],
+    {
+      input: source,
+      encoding: "utf8",
+    },
+  );
   if (result.status !== 0) throw new Error(`${file}: ${result.stderr}`);
-  for (const match of readFileSync(resolve(root, file), "utf8").matchAll(
+  for (const match of source.matchAll(
     /(?:from\s+|import\s*\()['"](\.[^'"]+)['"]/g,
   ))
     if (!existsSync(resolve(dirname(resolve(root, file)), match[1])))
